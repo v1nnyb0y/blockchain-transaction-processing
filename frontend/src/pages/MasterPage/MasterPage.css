@@ -1,3 +1,7 @@
 .master-page {
     margin: 2em;
 }
+
+.diagrams {
+    border-top: solid grey 1px;
+}
