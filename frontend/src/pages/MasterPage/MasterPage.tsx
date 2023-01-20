@@ -13,21 +13,26 @@ import {StateTransferApproach, StateTransferNode, ValidatorAlgo, ValidatorAlgoNo
 import {ClickEvent} from "devextreme/ui/button";
 
 const stateTransferApproachSource: Array<StateTransferNode> = [
-    { approach: StateTransferApproach.REST, value: StateTransferApproach.REST },
-    { approach: StateTransferApproach.gRPC, value: StateTransferApproach.gRPC },
-    { approach: StateTransferApproach.socket, value: StateTransferApproach.socket },
-    { approach: StateTransferApproach.Kafka, value: StateTransferApproach.Kafka }
+    { approach: StateTransferApproach.REST, value: "REST" },
+    { approach: StateTransferApproach.gRPC, value: "gRPC" },
+    { approach: StateTransferApproach.socket, value: "socket" },
+    { approach: StateTransferApproach.Kafka, value: "Kafka" }
 ];
 
 const validatorAlgoSource: Array<ValidatorAlgoNode> = [
-    { algo: ValidatorAlgo.ProofOfWork, value: ValidatorAlgo.ProofOfWork },
-    { algo: ValidatorAlgo.ProofOfState, value: ValidatorAlgo.ProofOfState }
+    { algo: ValidatorAlgo.ProofOfWork, value: "ProofOfWork" },
+    { algo: ValidatorAlgo.ProofOfState, value: "ProofOfState" }
 ];
 
 const MasterPage = () => {
-    const [numberOfInstances, setNumberOfInstances] = useState<number>(0);
+    const [numberOfInstances, setNumberOfInstances] = useState<number>(1);
+    const [numberOfTransactions, setNumberOfTransactions] = useState<number>(1);
     const [validatorAlgo, setValidatorAlgo] = useState<ValidatorAlgo | undefined>(undefined);
     const [stateTransferApproach, setStateTransferApproach] = useState<StateTransferApproach | undefined>(undefined);
+
+    const onNumberOfTransactionsChanged = (arg: { value?: number }) => {
+        setNumberOfTransactions(arg.value ?? 0);
+    }
 
     const onNumberOfInstancesChanged = (arg: { value?: number }) => {
         setNumberOfInstances(arg.value ?? 0);
@@ -44,13 +49,36 @@ const MasterPage = () => {
     const onSubmit = (arg: ClickEvent) => {
         let validation = arg.validationGroup.validate();
         if (validation.isValid) {
-            console.log(numberOfInstances);
-            console.log(stateTransferApproach);
-            console.log(validatorAlgo);
+            console.group();
+            console.log(`Number of Instances: ${numberOfInstances}`);
+            console.log(`Number of Transactions: ${numberOfTransactions}`)
+            console.log(`State Transfer Approach: ${stateTransferApproach}`);
+            console.log(`Validation Algorithm: ${validatorAlgo}`);
+            console.groupEnd();
 
-            // fetch data to backend
+            fetch('/experiment', {
+                method: 'POST',
+                mode: 'cors',
+                cache: 'no-cache',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    numberOfInstances,
+                    numberOfTransactions,
+                    stateTransferApproach,
+                    validatorAlgo
+                })
+            })
+                .then((res) => {
+                    console.log(res);
+                })
+                .catch((err) => {
+                    console.log(err);
+                })
         } else {
-            console.log('ERROR');
+            alert('ERROR');
         }
     }
 
@@ -58,7 +86,7 @@ const MasterPage = () => {
         <div className={"master-page"}>
             <div className={'mb-2'}>
                 <div className={'row'}>
-                    <div className={'col-4'}>
+                    <div className={'col-3'}>
                         <NumberBox
                             max={100}
                             min={1}
@@ -71,10 +99,28 @@ const MasterPage = () => {
                         >
                             <Validator>
                                 <RangeRule min={0} max={100} message={'Number of instances should be in range 0-100'} />
+                                <RequiredRule message={'Number of instances is required'} />
                             </Validator>
                         </NumberBox>
                     </div>
-                    <div className={'col-4'}>
+                    <div className={'col-3'}>
+                        <NumberBox
+                            max={1000000}
+                            min={1}
+                            mode={'number'}
+                            label={'Number of transactions'}
+                            height={'3em'}
+                            showSpinButtons={true}
+                            onValueChanged={onNumberOfTransactionsChanged}
+                            value={numberOfTransactions}
+                        >
+                            <Validator>
+                                <RangeRule min={0} max={1000000} message={'Number of transactions should be in range 0-1000000'} />
+                                <RequiredRule message={'Number of transactions is required'} />
+                            </Validator>
+                        </NumberBox>
+                    </div>
+                    <div className={'col-3'}>
                         <SelectBox
                             label={'State transfer approach'}
                             items={stateTransferApproachSource}
@@ -89,7 +135,7 @@ const MasterPage = () => {
                             </Validator>
                         </SelectBox>
                     </div>
-                    <div className={'col-4'}>
+                    <div className={'col-3'}>
                         <SelectBox
                             label={'Validator algorithm'}
                             items={validatorAlgoSource}

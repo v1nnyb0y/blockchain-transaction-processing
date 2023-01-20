@@ -7,7 +7,7 @@ export enum StateTransferApproach {
 
 export interface StateTransferNode {
     approach: StateTransferApproach,
-    value: StateTransferApproach
+    value: string
 }
 
 export enum ValidatorAlgo {
@@ -17,5 +17,5 @@ export enum ValidatorAlgo {
 
 export interface ValidatorAlgoNode {
     algo: ValidatorAlgo,
-    value: ValidatorAlgo
+    value: string
 }
