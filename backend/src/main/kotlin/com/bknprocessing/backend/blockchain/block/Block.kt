@@ -1,5 +1,6 @@
-package com.bknprocessing.backend.service.blockchain
+package com.bknprocessing.backend.service.blockchain.block
 
+import com.bknprocessing.backend.service.blockchain.Transaction
 import com.bknprocessing.backend.utils.hash
 import java.time.Instant
 

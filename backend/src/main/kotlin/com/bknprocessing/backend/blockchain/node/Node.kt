@@ -1,8 +1,11 @@
-package com.bknprocessing.backend.service.blockchain
+package com.bknprocessing.backend.service.blockchain.node
+
+import com.bknprocessing.backend.service.blockchain.block.Block
+import com.bknprocessing.backend.service.blockchain.Transaction
 
 // Proof of Work
 // TODO: implemenet abstract class and then implementation of each validation algorithm
-class Node {
+abstract class Node {
 
     private var blocks: MutableList<Block> = mutableListOf()
     var lastHash: String = ""
@@ -12,7 +15,6 @@ class Node {
 
     init {
         val genesisBlock = Block(previousHash = "0")
-        genesisBlock.addTransaction(Transaction())
         add(genesisBlock)
     }
 
