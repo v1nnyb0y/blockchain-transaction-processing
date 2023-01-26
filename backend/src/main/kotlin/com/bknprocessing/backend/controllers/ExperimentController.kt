@@ -1,7 +1,6 @@
 package com.bknprocessing.backend.controllers
 
-import com.bknprocessing.backend.controllers.models.ExperimentConfigurationDto
-import com.bknprocessing.backend.service.ExperimentService
+import com.bknprocessing.backend.service.ExperimentRunnerService
 import com.bknprocessing.backend.utils.logger
 import org.slf4j.Logger
 import org.springframework.web.bind.annotation.PostMapping
@@ -12,15 +11,15 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/experiment")
 class ExperimentController(
-    val experimentService: ExperimentService
+    val experimentRunnerService: ExperimentRunnerService
 ) {
 
     val log: Logger by logger()
 
     @PostMapping
-    fun startExperiment(@RequestBody configuration: ExperimentConfigurationDto): Boolean {
+    fun startExperiment(@RequestBody configuration: ExperimentDto): Boolean {
         log.info("Start POST query for START_EXPERIMENT with data: $configuration")
-        return experimentService.startExperiment(
+        return experimentRunnerService.startExperiment(
             configuration.numberOfInstances,
             configuration.numberOfTransactions,
             configuration.numberOfUnhealthyNodes,
