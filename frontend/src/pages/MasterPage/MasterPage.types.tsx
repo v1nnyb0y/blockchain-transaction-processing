@@ -2,7 +2,8 @@ export enum StateTransferApproach {
     Kafka = 'Kafka',
     gRPC = 'gRPC',
     socket = 'socket',
-    REST = 'REST API'
+    REST = 'REST API',
+    Coroutine = 'Coroutines & Channels'
 }
 
 export interface StateTransferNode {

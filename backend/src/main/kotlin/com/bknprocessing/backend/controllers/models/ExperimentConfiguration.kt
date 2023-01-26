@@ -5,13 +5,14 @@ enum class ValidatorAlgorithm {
 }
 
 enum class StateTransferApproach {
-    Kafka, gRPC, socket, REST // ktlint-disable enum-entry-name-case
+    Kafka, gRPC, socket, REST, Coroutine // ktlint-disable enum-entry-name-case
 }
 
-@Suppress("*")
+@Suppress("unused")
 data class ExperimentConfigurationDto(
     val numberOfInstances: Int,
     val numberOfTransactions: Int,
+    val numberOfUnhealthyNodes: Int,
     val validatorAlgo: ValidatorAlgorithm,
     val stateTransferApproach: StateTransferApproach
 )

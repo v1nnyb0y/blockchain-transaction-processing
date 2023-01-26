@@ -12,11 +12,13 @@ class ExperimentService(
     fun startExperiment(
         numberOfInstances: Int,
         numberOfTransactions: Int,
+        numberOfUnhealthyNodes: Int,
         stateTransferApproach: StateTransferApproach,
         validatorAlgorithm: ValidatorAlgorithm
     ): Boolean {
         blockChainService.let {
             it.numberOfInstances = numberOfInstances
+            it.numberOfUnhealthyNodes = numberOfUnhealthyNodes
             it.numberOfTransactions = numberOfTransactions
             it.stateTransferApproach = stateTransferApproach
             it.validatorAlgorithm = validatorAlgorithm

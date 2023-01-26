@@ -3,9 +3,9 @@ import React, {useState} from 'react';
 
 // Import components
 import {NumberBox} from 'devextreme-react/number-box';
-import { Button } from 'devextreme-react/button';
+import {Button} from 'devextreme-react/button';
 import SelectBox from 'devextreme-react/select-box';
-import {Validator, RequiredRule, RangeRule} from "devextreme-react/validator";
+import {RangeRule, RequiredRule, Validator} from "devextreme-react/validator";
 
 // Import styles
 import './MasterPage.css';
@@ -13,22 +13,27 @@ import {StateTransferApproach, StateTransferNode, ValidatorAlgo, ValidatorAlgoNo
 import {ClickEvent} from "devextreme/ui/button";
 
 const stateTransferApproachSource: Array<StateTransferNode> = [
-    { approach: StateTransferApproach.REST, value: "REST" },
-    { approach: StateTransferApproach.gRPC, value: "gRPC" },
-    { approach: StateTransferApproach.socket, value: "socket" },
-    { approach: StateTransferApproach.Kafka, value: "Kafka" }
+    {approach: StateTransferApproach.REST, value: "REST"},
+    {approach: StateTransferApproach.gRPC, value: "gRPC"},
+    {approach: StateTransferApproach.socket, value: "socket"},
+    {approach: StateTransferApproach.Kafka, value: "Kafka"},
+    {approach: StateTransferApproach.Coroutine, value: "Coroutine"}
 ];
 
 const validatorAlgoSource: Array<ValidatorAlgoNode> = [
-    { algo: ValidatorAlgo.ProofOfWork, value: "ProofOfWork" },
-    { algo: ValidatorAlgo.ProofOfState, value: "ProofOfState" }
+    {algo: ValidatorAlgo.ProofOfState, value: "ProofOfState"}
 ];
 
 const MasterPage = () => {
     const [numberOfInstances, setNumberOfInstances] = useState<number>(1);
     const [numberOfTransactions, setNumberOfTransactions] = useState<number>(1);
+    const [numberOfUnhealthyNodes, setNumberOfUnhealthyNodes] = useState<number>(1);
     const [validatorAlgo, setValidatorAlgo] = useState<ValidatorAlgo | undefined>(undefined);
     const [stateTransferApproach, setStateTransferApproach] = useState<StateTransferApproach | undefined>(undefined);
+
+    const onNumberOfUnhealthyNodesChanged = (arg: { value?: number }) => {
+        setNumberOfUnhealthyNodes(arg.value ?? 0);
+    }
 
     const onNumberOfTransactionsChanged = (arg: { value?: number }) => {
         setNumberOfTransactions(arg.value ?? 0);
@@ -51,6 +56,7 @@ const MasterPage = () => {
         if (validation.isValid) {
             console.group();
             console.log(`Number of Instances: ${numberOfInstances}`);
+            console.log(`Number of Unhealthy Nodes: ${numberOfUnhealthyNodes}`);
             console.log(`Number of Transactions: ${numberOfTransactions}`)
             console.log(`State Transfer Approach: ${stateTransferApproach}`);
             console.log(`Validation Algorithm: ${validatorAlgo}`);
@@ -67,6 +73,7 @@ const MasterPage = () => {
                 body: JSON.stringify({
                     numberOfInstances,
                     numberOfTransactions,
+                    numberOfUnhealthyNodes,
                     stateTransferApproach,
                     validatorAlgo
                 })
@@ -98,8 +105,8 @@ const MasterPage = () => {
                             value={numberOfInstances}
                         >
                             <Validator>
-                                <RangeRule min={0} max={100} message={'Number of instances should be in range 0-100'} />
-                                <RequiredRule message={'Number of instances is required'} />
+                                <RangeRule min={0} max={100} message={'Number of instances should be in range 0-100'}/>
+                                <RequiredRule message={'Number of instances is required'}/>
                             </Validator>
                         </NumberBox>
                     </div>
@@ -115,8 +122,9 @@ const MasterPage = () => {
                             value={numberOfTransactions}
                         >
                             <Validator>
-                                <RangeRule min={0} max={1000000} message={'Number of transactions should be in range 0-1000000'} />
-                                <RequiredRule message={'Number of transactions is required'} />
+                                <RangeRule min={0} max={1000000}
+                                           message={'Number of transactions should be in range 0-1000000'}/>
+                                <RequiredRule message={'Number of transactions is required'}/>
                             </Validator>
                         </NumberBox>
                     </div>
@@ -131,7 +139,7 @@ const MasterPage = () => {
                             value={stateTransferApproach}
                         >
                             <Validator>
-                                <RequiredRule message={'State Transfer approach is required'} />
+                                <RequiredRule message={'State Transfer approach is required'}/>
                             </Validator>
                         </SelectBox>
                     </div>
@@ -146,9 +154,29 @@ const MasterPage = () => {
                             value={validatorAlgo}
                         >
                             <Validator>
-                                <RequiredRule message={'Validator algorithm is required'} />
+                                <RequiredRule message={'Validator algorithm is required'}/>
                             </Validator>
                         </SelectBox>
+                    </div>
+                </div>
+                <div className={'row'}>
+                    <div className={'col-3'}>
+                        <NumberBox
+                            max={100}
+                            min={1}
+                            mode={'number'}
+                            label={'Number of unhealthy nodes'}
+                            height={'3em'}
+                            showSpinButtons={true}
+                            onValueChanged={onNumberOfUnhealthyNodesChanged}
+                            value={numberOfUnhealthyNodes}
+                        >
+                            <Validator>
+                                <RangeRule min={0} max={100}
+                                           message={'Number of unhealthy nodes should be in range 0-100'}/>
+                                <RequiredRule message={'Number of unhealthy nodes is required'}/>
+                            </Validator>
+                        </NumberBox>
                     </div>
                 </div>
                 <div className={'mt-2'}>
