@@ -1,8 +1,5 @@
-package com.bknprocessing.backend.blockchain
+package com.bknprocessing.backend.models
 
-import com.bknprocessing.backend.blockchain.block.Block
-import com.bknprocessing.backend.blockchain.block.UnhealthyBlock
-import com.bknprocessing.backend.entity.Transaction
 import com.bknprocessing.backend.utils.logger
 import kotlinx.coroutines.channels.Channel
 import org.slf4j.Logger

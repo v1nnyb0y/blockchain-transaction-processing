@@ -1,4 +1,4 @@
-package com.bknprocessing.backend.entity
+package com.bknprocessing.backend.models
 
 import java.util.UUID
 
