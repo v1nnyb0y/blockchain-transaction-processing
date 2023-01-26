@@ -23,6 +23,7 @@ class ExperimentController(
         return experimentService.startExperiment(
             configuration.numberOfInstances,
             configuration.numberOfTransactions,
+            configuration.numberOfUnhealthyNodes,
             configuration.stateTransferApproach,
             configuration.validatorAlgo
         )

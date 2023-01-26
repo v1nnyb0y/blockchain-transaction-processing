@@ -1,4 +1,4 @@
-package com.bknprocessing.backend.service.blockchain
+package com.bknprocessing.backend.entity
 
 import java.util.UUID
 

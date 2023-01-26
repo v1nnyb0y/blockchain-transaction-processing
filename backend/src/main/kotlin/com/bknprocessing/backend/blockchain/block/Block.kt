@@ -1,14 +1,14 @@
-package com.bknprocessing.backend.service.blockchain.block
+package com.bknprocessing.backend.blockchain.block
 
-import com.bknprocessing.backend.service.blockchain.Transaction
+import com.bknprocessing.backend.entity.Transaction
 import com.bknprocessing.backend.utils.hash
 import java.time.Instant
 
-data class Block(
+open class Block(
     val previousHash: String,
     val transactions: MutableList<Transaction> = mutableListOf(),
     val timestamp: Long = Instant.now().toEpochMilli(),
-    val nonce: Long = 0,
+    var nonce: Long = 0,
     var hash: String = ""
 ) {
 
@@ -16,7 +16,7 @@ data class Block(
         hash = calculateHash()
     }
 
-    fun calculateHash(): String {
+    open fun calculateHash(): String {
         return "$previousHash$transactions$timestamp$nonce".hash()
     }
 
