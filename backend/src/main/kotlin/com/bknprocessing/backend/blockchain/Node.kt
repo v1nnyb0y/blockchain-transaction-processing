@@ -63,6 +63,8 @@ class Node(
                             if (result.first) {
                                 countOfSuccessNodes += 1
                             }
+                        } else {
+                            forResultChannel.send(result)
                         }
                     }
                     break
