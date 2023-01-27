@@ -1,14 +1,19 @@
 package com.bknprocessing.backend.models
 
 import com.bknprocessing.backend.utils.logger
+import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.delay
 import org.slf4j.Logger
 import java.util.UUID
 import kotlin.random.Random
 
 class Node(
-    private val isHealthy: Boolean,
-    private val numberOfNodes: Int
+    private val index: Int,
+    private val nodesCount: Int,
+    private val isHealthy: Boolean
 ) {
 
     val log: Logger by logger()
@@ -33,45 +38,42 @@ class Node(
 
     fun isMiner() = money > (MAX_MONEY / 20)
 
+    @OptIn(ObsoleteCoroutinesApi::class)
     suspend fun runMining(
-        forTransChannel: Channel<Transaction>,
+        forTransChannel: ConflatedBroadcastChannel<Transaction>,
         forVerifyChannel: Channel<Block>,
         forResultChannel: Channel<Pair<Boolean, Block>>
-    ): Boolean {
-        while (true) {
-            val objTrans = forTransChannel.tryReceive()
-            if (objTrans.isSuccess) {
-                log.info("Node with ID: $Id is working (Mining)")
-                val trans = objTrans.getOrNull()!!
-                val verifyingBlock = constructBlock(trans)
+    ) {
+        forTransChannel.consumeEach { trans ->
+            log.info("Node with ID: $Id is working (Mining)")
+            val verifyingBlock = constructBlock(trans)
 
-                forVerifyChannel.send(verifyingBlock)
-                var countOfFinishedNodes = 0
-                var countOfSuccessNodes = 0
-                while (countOfFinishedNodes == numberOfNodes ||
-                    (countOfSuccessNodes / numberOfNodes > 0.8)
-                ) {
-                    val objResult = forResultChannel.tryReceive()
-                    if (objResult.isSuccess) {
-                        val result = objResult.getOrNull()!!
-                        if (result.second.hash == verifyingBlock.hash) {
-                            countOfFinishedNodes += 1
+            forVerifyChannel.send(verifyingBlock)
+            var countOfFinishedNodes = 0
+            var countOfSuccessNodes = 0
+            while (countOfFinishedNodes == nodesCount ||
+                (countOfSuccessNodes / nodesCount > 0.8)
+            ) {
+                val objResult = forResultChannel.tryReceive()
+                if (objResult.isSuccess) {
+                    val result = objResult.getOrNull()!!
+                    if (result.second.hash == verifyingBlock.hash) {
+                        countOfFinishedNodes += 1
 
-                            if (result.first) {
-                                countOfSuccessNodes += 1
-                            }
-                        } else {
-                            forResultChannel.send(result)
+                        if (result.first) {
+                            countOfSuccessNodes += 1
                         }
+                    } else {
+                        forResultChannel.send(result)
                     }
-                    break
                 }
+                break
+            }
 
-                if (countOfSuccessNodes / numberOfNodes > 0.8) {
-                    log.info("Node with ID: $Id is verified transaction with ID: ${trans.transId}")
-                } else {
-                    log.info("Node with ID: $Id isn't verified transaction with ID: ${trans.transId}")
-                }
+            if (countOfSuccessNodes / nodesCount > 0.8) {
+                log.info("Node with ID: $Id is verified transaction with ID: ${trans.transId}")
+            } else {
+                log.info("Node with ID: $Id isn't verified transaction with ID: ${trans.transId}")
             }
         }
     }
@@ -87,6 +89,7 @@ class Node(
                 val block = objBlock.getOrNull()!!
                 forResultChannel.send(Pair(verifyBlock(block), block))
             }
+            delay(100)
         }
     }
 

@@ -7,17 +7,17 @@ import org.springframework.stereotype.Service
 @Service
 class ExperimentRunnerService {
 
-    fun startExperiment(
+    suspend fun start(
         numberOfInstances: Int,
         numberOfTransactions: Int,
         numberOfUnhealthyNodes: Int,
         stateTransferApproach: StateTransferApproach,
         validatorAlgorithm: ValidatorAlgorithm
-    ): Boolean = BlockChainService(
-        numberOfInstances = numberOfInstances,
-        numberOfUnhealthyNodes = numberOfUnhealthyNodes,
+    ) = BlockChainService(
+        nodesCount = numberOfInstances,
+        unhealthyNodesCount = numberOfUnhealthyNodes,
         numberOfTransactions = numberOfTransactions,
         stateTransferApproach = stateTransferApproach,
         validatorAlgorithm = validatorAlgorithm
-    ).startExperiment()
+    ).createPoolAndRun()
 }

@@ -17,11 +17,11 @@ class ExperimentController(
     val log: Logger by logger()
 
     @PostMapping
-    fun startExperiment(@RequestBody configuration: ExperimentDto): Boolean {
+    suspend fun startExperiment(@RequestBody configuration: ExperimentDto) {
         log.info("Start POST query for START_EXPERIMENT with data: $configuration")
-        return experimentRunnerService.startExperiment(
-            configuration.numberOfInstances,
-            configuration.numberOfTransactions,
+        experimentRunnerService.start(
+            numberOfInstances = configuration.numberOfInstances,
+            configuration.numberOfTransactions, // TODO naming args!!
             configuration.numberOfUnhealthyNodes,
             configuration.stateTransferApproach,
             configuration.validatorAlgo
