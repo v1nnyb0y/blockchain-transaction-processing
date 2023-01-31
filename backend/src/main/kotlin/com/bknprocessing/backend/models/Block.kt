@@ -1,22 +1,24 @@
 package com.bknprocessing.backend.models
 
-import com.bknprocessing.backend.models.Transaction
 import com.bknprocessing.backend.utils.hash
 import java.time.Instant
 
-open class Block(
+data class Block(
     val previousHash: String,
     val transactions: MutableList<Transaction> = mutableListOf(),
     val timestamp: Long = Instant.now().toEpochMilli(),
     var nonce: Long = 0,
-    var hash: String = ""
+    var hash: String = "",
+    private var isHealthy: Boolean = true
 ) {
 
     init {
         hash = calculateHash()
     }
 
-    open fun calculateHash(): String {
+    fun calculateHash(): String {
+        val errorHash = previousHash.hash()
+
         return "$previousHash$transactions$timestamp$nonce".hash()
     }
 

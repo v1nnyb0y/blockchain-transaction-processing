@@ -62,7 +62,7 @@ const MasterPage = () => {
             console.log(`Validation Algorithm: ${validatorAlgo}`);
             console.groupEnd();
 
-            fetch('/experiment', {
+            fetch('/asyncExperiment', {
                 method: 'POST',
                 mode: 'cors',
                 cache: 'no-cache',
