@@ -13,7 +13,7 @@ class Node(
     private val index: Int,
     private val nodesCount: Int,
     private val isHealthy: Boolean
-) {
+) : INode {
 
     private val log: Logger by logger()
 
@@ -35,9 +35,9 @@ class Node(
         lastAddedIntoChainBlockHash = genericBlock.currentHash
     }
 
-    fun isMiner() = amount > (MAX_MONEY / 20)
+    override fun isMiner(): Boolean = amount > (MAX_MONEY / 20)
 
-    suspend fun runMining(
+    override suspend fun runMining(
         forTransChannel: ReceiveChannel<Transaction>,
         forVerifyChannel: SendChannel<Block>,
         forVerificationResultChannel: Channel<Pair<Boolean, Block>>
@@ -79,7 +79,7 @@ class Node(
         }
     }
 
-    suspend fun runVerifying(
+    override suspend fun runVerifying(
         forVerifyChannel: ReceiveChannel<Block>,
         forResultChannel: SendChannel<Pair<Boolean, Block>>
     ) {
