@@ -1,21 +1,14 @@
 package com.bknprocessing.backend.models
 
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
-
 interface INode {
+
+    fun mineBlock(block: Block, ignoreLog: Boolean = false): Block
+
+    suspend fun verifyBlock(block: Block): Boolean
 
     fun isMiner(): Boolean
 
-    suspend fun runMining(
-        forTransChannel: ReceiveChannel<Transaction>,
-        forVerifyChannel: SendChannel<Block>,
-        forVerificationResultChannel: Channel<Pair<Boolean, Block>>
-    )
+    fun isChainValid(): Boolean
 
-    suspend fun runVerifying(
-        forVerifyChannel: ReceiveChannel<Block>,
-        forResultChannel: SendChannel<Pair<Boolean, Block>>
-    )
+    suspend fun constructBlock(tx: Transaction): Block
 }

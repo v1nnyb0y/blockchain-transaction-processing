@@ -30,14 +30,12 @@ class Node(
 
     init {
         var genericBlock = Block(previousHash = lastAddedIntoChainBlockHash)
-        genericBlock = mine(genericBlock, false)
+        genericBlock = mineBlock(genericBlock, false)
         chain.add(genericBlock)
         lastAddedIntoChainBlockHash = genericBlock.currentHash
     }
 
-    override fun isMiner(): Boolean = amount > (MAX_MONEY / 20)
-
-    override suspend fun runMining(
+    suspend fun runMining(
         forTransChannel: ReceiveChannel<Transaction>,
         forVerifyChannel: SendChannel<Block>,
         forVerificationResultChannel: Channel<Pair<Boolean, Block>>
@@ -79,7 +77,7 @@ class Node(
         }
     }
 
-    override suspend fun runVerifying(
+    suspend fun runVerifying(
         forVerifyChannel: ReceiveChannel<Block>,
         forResultChannel: SendChannel<Pair<Boolean, Block>>
     ) {
@@ -93,11 +91,13 @@ class Node(
         }
     }
 
-    private fun verifyBlock(block: Block): Boolean {
-        val minedBlock = if (isMined(block)) block else mine(block)
+    override fun isMiner(): Boolean = amount > (MAX_MONEY / 20)
+
+    override suspend fun verifyBlock(block: Block): Boolean {
+        val minedBlock = if (isMined(block)) block else mineBlock(block)
         chain.add(minedBlock)
 
-        if (!isValid()) {
+        if (!isChainValid()) {
             chain.removeLast()
             return false
         }
@@ -107,14 +107,10 @@ class Node(
         return true
     }
 
-    private fun constructBlock(tx: Transaction) =
+    override suspend fun constructBlock(tx: Transaction) =
         Block(previousHash = lastAddedIntoChainBlockHash).apply { addTransaction(tx) }
 
-    private fun isMined(block: Block): Boolean {
-        return block.currentHash.startsWith(validPrefix)
-    }
-
-    private fun mine(block: Block, ignoreLog: Boolean = false): Block {
+    override fun mineBlock(block: Block, ignoreLog: Boolean): Block {
         if (!ignoreLog) log.info("Mining: ${block.currentHash}")
 
         var minedBlock = block.copy()
@@ -127,7 +123,7 @@ class Node(
         return minedBlock
     }
 
-    private fun isValid(): Boolean {
+    override fun isChainValid(): Boolean {
         when {
             chain.isEmpty() -> return true
             chain.size == 1 -> return chain[0].currentHash == chain[0].calculateBlockHash()
@@ -145,6 +141,10 @@ class Node(
                 return true
             }
         }
+    }
+
+    private fun isMined(block: Block): Boolean {
+        return block.currentHash.startsWith(validPrefix)
     }
 
     companion object {
