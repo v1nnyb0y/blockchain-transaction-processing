@@ -18,15 +18,15 @@ class Node(
     private val log: Logger by logger()
 
     private val id: UUID = UUID.randomUUID()
-    private var money = Random.nextInt(MIN_MONEY, MAX_MONEY)
 
-    private var lastHash: String = ""
-    private var blocks: MutableList<Block> = mutableListOf()
+    private var amount = Random.nextInt(MIN_MONEY, MAX_MONEY)
 
-    var isFinished: Boolean = false
+    private var chain: MutableList<Block> = mutableListOf()
+    private var lastAddedIntoChainBlockHash: String = ""
 
-    // Properties for testing
+    // Experimental properties for testing bellow
     var countOfHandledTrans: Int = 0
+    var isFinished: Boolean = false
 
     companion object {
         private const val MONEY_INT: Int = 4
@@ -40,13 +40,13 @@ class Node(
     }
 
     init {
-        var genericBlock = Block(previousHash = lastHash, isHealthy = isHealthy)
+        var genericBlock = Block(previousHash = lastAddedIntoChainBlockHash)
         genericBlock = mine(genericBlock, false)
-        blocks.add(genericBlock)
-        lastHash = genericBlock.hash
+        chain.add(genericBlock)
+        lastAddedIntoChainBlockHash = genericBlock.currentHash
     }
 
-    fun isMiner() = money > (MAX_MONEY / 20)
+    fun isMiner() = amount > (MAX_MONEY / 20)
 
     suspend fun runMining(
         forTransChannel: ReceiveChannel<Transaction>,
@@ -71,7 +71,7 @@ class Node(
                 if (countOfFinishedNodes == nodesCount - 1) break
                 val result = forVerificationResultChannel.tryReceive().getOrNull() ?: continue
 
-                if (result.second.hash == verifyingBlock.hash) {
+                if (result.second.currentHash == verifyingBlock.currentHash) {
                     countOfFinishedNodes += 1
 
                     if (result.first) {
@@ -106,52 +106,50 @@ class Node(
 
     private fun verifyBlock(block: Block): Boolean {
         val minedBlock = if (isMined(block)) block else mine(block)
-        blocks.add(minedBlock)
+        chain.add(minedBlock)
 
         if (!isValid()) {
-            blocks.removeLast()
+            chain.removeLast()
             return false
         }
 
-        lastHash = minedBlock.hash
-        money += 1
+        lastAddedIntoChainBlockHash = minedBlock.currentHash
+        amount += 1
         return true
     }
 
-    private fun constructBlock(trans: Transaction) = Block(
-        previousHash = lastHash,
-        isHealthy = isHealthy
-    ).apply { addTransaction(trans) }
+    private fun constructBlock(tx: Transaction) =
+        Block(previousHash = lastAddedIntoChainBlockHash).apply { addTransaction(tx) }
 
     private fun isMined(block: Block): Boolean {
-        return block.hash.startsWith(validPrefix)
+        return block.currentHash.startsWith(validPrefix)
     }
 
     private fun mine(block: Block, ignoreLog: Boolean = false): Block {
-        if (!ignoreLog) log.info("Mining: ${block.hash}")
+        if (!ignoreLog) log.info("Mining: ${block.currentHash}")
 
         var minedBlock = block.copy()
         while (!isMined(minedBlock)) {
             minedBlock = minedBlock.copy(nonce = minedBlock.nonce + 1)
         }
 
-        if (!ignoreLog) log.info("Mined : ${minedBlock.hash}")
+        if (!ignoreLog) log.info("Mined : ${minedBlock.currentHash}")
 
         return minedBlock
     }
 
     private fun isValid(): Boolean {
         when {
-            blocks.isEmpty() -> return true
-            blocks.size == 1 -> return blocks[0].hash == blocks[0].calculateHash()
+            chain.isEmpty() -> return true
+            chain.size == 1 -> return chain[0].currentHash == chain[0].calculateBlockHash()
             else -> {
-                for (i in 1 until blocks.size) {
-                    val previousBlock = blocks[i - 1]
-                    val currentBlock = blocks[i]
+                for (i in 1 until chain.size) {
+                    val previousBlock = chain[i - 1]
+                    val currentBlock = chain[i]
 
                     when {
-                        currentBlock.hash != currentBlock.calculateHash() -> return false
-                        currentBlock.previousHash != previousBlock.calculateHash() -> return false
+                        currentBlock.currentHash != currentBlock.calculateBlockHash() -> return false
+                        currentBlock.previousHash != previousBlock.calculateBlockHash() -> return false
                         !(isMined(previousBlock) && isMined(currentBlock)) -> return false
                     }
                 }
