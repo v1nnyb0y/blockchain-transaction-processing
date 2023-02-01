@@ -28,17 +28,6 @@ class Node(
     var countOfHandledTrans: Int = 0
     var isFinished: Boolean = false
 
-    companion object {
-        private const val MONEY_INT: Int = 4
-        private const val MAX_MONEY: Int = 10000
-        private const val MIN_MONEY: Int = 100
-
-        private const val EPSILON = 0.0000000001
-
-        private const val difficulty = 2
-        private val validPrefix = "0".repeat(difficulty)
-    }
-
     init {
         var genericBlock = Block(previousHash = lastAddedIntoChainBlockHash)
         genericBlock = mine(genericBlock, false)
@@ -156,5 +145,16 @@ class Node(
                 return true
             }
         }
+    }
+
+    companion object {
+        private val MONEY_INT: Int = 4
+        private val MAX_MONEY: Int = 10000
+        private val MIN_MONEY: Int = 100
+
+        private val EPSILON = 0.0000000001
+
+        private val difficulty = 2
+        private val validPrefix = "0".repeat(difficulty)
     }
 }
