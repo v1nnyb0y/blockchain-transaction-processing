@@ -18,7 +18,6 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 
 class PoolService(
@@ -77,7 +76,7 @@ class PoolService(
     }
 
     @OptIn(ObsoleteCoroutinesApi::class)
-    private suspend fun doMine(node: INode) = runBlocking {
+    private suspend fun doMine(node: INode) {
         if (node.isMiner()) {
             while (!isFinished) {
                 delay(DELAY)
