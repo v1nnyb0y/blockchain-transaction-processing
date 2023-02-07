@@ -1,10 +1,15 @@
 package com.bknprocessing.backend.service
 
-import com.bknprocessing.backend.models.Block
+import com.bknprocessing.backend.models.INode
 import com.bknprocessing.backend.models.Node
 import com.bknprocessing.backend.models.Transaction
+import com.bknprocessing.backend.service.dto.VerificationDto
+import com.bknprocessing.backend.service.dto.VerificationResultDto
 import com.bknprocessing.backend.type.ValidatorAlgorithm
+import com.bknprocessing.backend.utils.endNetworkVerify
 import com.bknprocessing.backend.utils.logger
+import com.bknprocessing.backend.utils.startNetworkVerify
+import com.bknprocessing.backend.utils.waitAllChannelEmpty
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.BroadcastChannel
@@ -13,7 +18,7 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 
 class PoolService(
@@ -21,35 +26,30 @@ class PoolService(
     val unhealthyNodesCount: Int,
     val validatorAlgorithm: ValidatorAlgorithm
 ) {
+    /* Test data (for unit-testing) */
+    var numberOfHandledTransactions: Int = 0
+    var numberOfHandledVerification: Int = 0
+    var numberOfHandledVerificationResult: Int = 0
+    /* Test data (for unit-testing) */
 
     private val log: Logger by logger()
 
-    val nodes = mutableListOf<Node>()
-
-    private val transChannel = Channel<Transaction>(capacity = 1)
+    private var isFinished: Boolean = false
+    val nodes = mutableListOf<INode>()
 
     @OptIn(ObsoleteCoroutinesApi::class)
-    private val blockChannel = BroadcastChannel<Block>(capacity = nodesCount * nodesCount)
-    private val resultChannel = Channel<Pair<Boolean, Block>>(capacity = UNLIMITED)
+    private val blockVerificationChannel = BroadcastChannel<VerificationDto>(capacity = nodesCount * nodesCount)
+    private val blockVerificationResultChannel = Channel<VerificationResultDto>(capacity = UNLIMITED)
+    private val transactionChannel = Channel<Transaction>(capacity = 1)
 
     init {
         for (idx in 0..nodesCount - unhealthyNodesCount) {
-            nodes.add(Node(index = idx, nodesCount = nodesCount, isHealthy = true))
+            nodes.add(Node(index = idx, isHealthy = true))
         }
         for (idx in 0..unhealthyNodesCount) {
-            nodes.add(Node(index = idx, nodesCount = nodesCount, isHealthy = false))
+            nodes.add(Node(index = idx, isHealthy = false))
         }
     }
-
-    /*suspend fun run(numberOfTransactions: Int) {
-        for (i in 0 until nodes.size) {
-            awaitSupervisor(
-                { doMine(nodes[i]) },
-                { doVerify(nodes[i]) },
-                { doSendTransactions(numberOfTransactions) }
-            )
-        }
-    }*/
 
     @OptIn(ExperimentalCoroutinesApi::class, ObsoleteCoroutinesApi::class)
     suspend fun run(numberOfTransactions: Int) = coroutineScope {
@@ -60,48 +60,117 @@ class PoolService(
 
         launch {
             doSendTransactions(numberOfTransactions)
-            while (!transChannel.isEmpty ||
-                !resultChannel.isEmpty ||
-                !blockChannel.openSubscription().isEmpty
+            while (!transactionChannel.isEmpty ||
+                !blockVerificationResultChannel.isEmpty ||
+                !blockVerificationChannel.openSubscription().isEmpty
             ) {
-                log.info(
-                    "trans-channel = ${transChannel.isEmpty}, " +
-                        "result-channel = ${resultChannel.isEmpty}, " +
-                        "block-channel = ${blockChannel.openSubscription().isEmpty}"
+                delay(DELAY)
+                log.waitAllChannelEmpty(
+                    isTransactionChannelEmpty = transactionChannel.isEmpty,
+                    isBlockVerificationChannelEmpty = blockVerificationChannel.openSubscription().isEmpty,
+                    isBlockVerificationResultChannelEmpty = blockVerificationResultChannel.isEmpty
                 )
-                delay(250)
             }
 
-            for (i in 0 until nodes.size) {
-                nodes[i].isFinished = true
+            isFinished = true
+        }
+    }
+
+    @OptIn(ObsoleteCoroutinesApi::class)
+    private suspend fun doMine(node: INode) = runBlocking {
+        if (node.isMiner()) {
+            while (!isFinished) {
+                delay(DELAY)
+                val trans = transactionChannel.tryReceive().getOrNull() ?: continue
+                numberOfHandledTransactions += 1
+
+                val constructedBlock = node.constructBlock(trans)
+                val minedBlock = node.mineBlock(constructedBlock, false)
+
+                blockVerificationChannel.send(
+                    VerificationDto(
+                        block = minedBlock,
+                        nodeIndex = node.index
+                    )
+                )
+
+                // Start verification by nodes in network
+                var countOfFinishedNodes = 0
+                var countOfSuccessVerificationNodes = 0
+
+                log.startNetworkVerify(node.isHealthy, node.index, minedBlock.currentHash)
+                while (countOfFinishedNodes != nodesCount - 1) {
+                    // TODO add checking on 80% of the success nodes
+                    delay(DELAY)
+
+                    val verificationResult =
+                        blockVerificationResultChannel.tryReceive().getOrNull() ?: continue
+                    if (minedBlock.currentHash == verificationResult.blockHash &&
+                        node.index == verificationResult.nodeIndex
+                    ) {
+                        numberOfHandledVerificationResult += 1
+                        countOfFinishedNodes += 1
+
+                        if (verificationResult.verificationResult) {
+                            countOfSuccessVerificationNodes += 1
+                        }
+                    } else {
+                        blockVerificationResultChannel.send(verificationResult)
+                    }
+                }
+
+                if (countOfSuccessVerificationNodes / (nodesCount - 1) - 0.8 >= EPSILON) {
+                    log.endNetworkVerify(node.isHealthy, node.index, minedBlock.currentHash, true)
+                } else {
+                    log.endNetworkVerify(node.isHealthy, node.index, minedBlock.currentHash, false)
+                    node.removeBlockFromChain()
+                }
             }
         }
     }
 
     @OptIn(ObsoleteCoroutinesApi::class)
-    private suspend fun doMine(node: Node) {
-        if (node.isMiner()) node.runMining(
-            forTransChannel = transChannel,
-            forVerifyChannel = blockChannel,
-            forVerificationResultChannel = resultChannel
-        )
-    }
+    private suspend fun doVerify(node: INode) {
+        val blockVerificationReceiveChannel = blockVerificationChannel.openSubscription()
+        while (!isFinished) {
+            delay(DELAY)
+            val verificationDto = blockVerificationReceiveChannel.tryReceive().getOrNull() ?: continue
+            if (verificationDto.nodeIndex == node.index) continue
 
-    @OptIn(ObsoleteCoroutinesApi::class)
-    private suspend fun doVerify(node: Node) {
-        node.runVerifying(
-            forVerifyChannel = blockChannel.openSubscription(),
-            forResultChannel = resultChannel
-        )
+            numberOfHandledVerification += 1
+            blockVerificationResultChannel.send(
+                VerificationResultDto(
+                    blockHash = verificationDto.block.currentHash,
+                    nodeIndex = verificationDto.nodeIndex,
+                    verificationResult = node.verifyBlock(verificationDto.block)
+                )
+            )
+        }
     }
 
     private fun doSendTransactions(numberOfTransactions: Int) {
         var i = 1
         while (i <= numberOfTransactions) {
-            val result = transChannel.trySend(Transaction())
+            val result = transactionChannel.trySend(Transaction())
             if (result.isSuccess) {
                 i += 1
             }
+        }
+    }
+
+    companion object {
+        private const val EPSILON = 0.0000000001
+        private const val DELAY: Long = 100
+    }
+
+    /*
+    suspend fun run(numberOfTransactions: Int) {
+        for (i in 0 until nodes.size) {
+            awaitSupervisor(
+                { doMine(nodes[i]) },
+                { doVerify(nodes[i]) },
+                { doSendTransactions(numberOfTransactions) }
+            )
         }
     }
 
@@ -111,4 +180,5 @@ class PoolService(
                 launch { it() }
             }
         }
+    */
 }

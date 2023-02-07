@@ -1,141 +1,94 @@
 package com.bknprocessing.backend.models
 
+import com.bknprocessing.backend.utils.blockAlreadyMined
+import com.bknprocessing.backend.utils.constructBlock
+import com.bknprocessing.backend.utils.endMining
+import com.bknprocessing.backend.utils.endVerify
+import com.bknprocessing.backend.utils.hash
 import com.bknprocessing.backend.utils.logger
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.delay
+import com.bknprocessing.backend.utils.startMining
+import com.bknprocessing.backend.utils.startVerify
 import org.slf4j.Logger
-import java.util.UUID
 import kotlin.random.Random
 
 class Node(
-    private val index: Int,
-    private val nodesCount: Int,
-    private val isHealthy: Boolean
+    override val index: Int,
+    override val isHealthy: Boolean
 ) : INode {
 
     private val log: Logger by logger()
-
-    private val id: UUID = UUID.randomUUID()
 
     private var amount = Random.nextInt(MIN_MONEY, MAX_MONEY)
 
     private var chain: MutableList<Block> = mutableListOf()
     private var lastAddedIntoChainBlockHash: String = ""
 
-    // Experimental properties for testing bellow
-    var countOfHandledTrans: Int = 0
-    var isFinished: Boolean = false
-
     init {
-        var genericBlock = Block(previousHash = lastAddedIntoChainBlockHash)
-        genericBlock = mineBlock(genericBlock, false)
-        chain.add(genericBlock)
-        lastAddedIntoChainBlockHash = genericBlock.currentHash
-    }
-
-    suspend fun runMining(
-        forTransChannel: ReceiveChannel<Transaction>,
-        forVerifyChannel: SendChannel<Block>,
-        forVerificationResultChannel: Channel<Pair<Boolean, Block>>
-    ) {
-        while (!isFinished) {
-            delay(100)
-            val trans = forTransChannel.tryReceive().getOrNull() ?: continue
-            countOfHandledTrans += 1
-
-            val healthyStr = if (isHealthy) "healthy" else "unhealthy"
-            log.info("Node with INDEX: $index ($healthyStr) is working (Mining)")
-            val verifyingBlock = constructBlock(trans)
-
-            forVerifyChannel.send(verifyingBlock)
-            var countOfFinishedNodes = 0
-            var countOfSuccessNodes = 0
-            // while (countOfSuccessNodes / (nodesCount - 1) - 0.8 < EPSILON) {
-            while (true) {
-                delay(100)
-                if (countOfFinishedNodes == nodesCount - 1) break
-                val result = forVerificationResultChannel.tryReceive().getOrNull() ?: continue
-
-                if (result.second.currentHash == verifyingBlock.currentHash) {
-                    countOfFinishedNodes += 1
-
-                    if (result.first) {
-                        countOfSuccessNodes += 1
-                    }
-                } else {
-                    forVerificationResultChannel.send(result)
-                }
-            }
-
-            if (countOfSuccessNodes / (nodesCount - 1) - 0.8 >= EPSILON) {
-                log.info("Node with INDEX: $index is verified transaction with ID: ${trans.transId}")
-            } else {
-                log.info("Node with INDEX: $index isn't verified transaction with ID: ${trans.transId}")
-            }
-        }
-    }
-
-    suspend fun runVerifying(
-        forVerifyChannel: ReceiveChannel<Block>,
-        forResultChannel: SendChannel<Pair<Boolean, Block>>
-    ) {
-        while (!isFinished) {
-            delay(100)
-            val block = forVerifyChannel.tryReceive().getOrNull() ?: continue
-
-            val healthyStr = if (isHealthy) "healthy" else "unhealthy"
-            log.info("Node with INDEX: $index ($healthyStr) is working (Verifying)")
-            forResultChannel.send(Pair(verifyBlock(block), block))
-        }
+        mineBlock(constructBlock(Transaction()), true)
     }
 
     override fun isMiner(): Boolean = amount > (MAX_MONEY / 20)
 
-    override suspend fun verifyBlock(block: Block): Boolean {
-        val minedBlock = if (isMined(block)) block else mineBlock(block)
-        chain.add(minedBlock)
+    /* Miner node actions */
 
-        if (!isChainValid()) {
-            chain.removeLast()
-            return false
-        }
+    private fun Block.calculateHash() = "$previousHash$transactions$timestamp$nonce".hash()
 
-        lastAddedIntoChainBlockHash = minedBlock.currentHash
-        amount += 1
-        return true
+    private fun Block.calculateAndAssignHash() = apply {
+        currentHash = calculateHash()
     }
 
-    override suspend fun constructBlock(tx: Transaction) =
-        Block(previousHash = lastAddedIntoChainBlockHash).apply { addTransaction(tx) }
+    private fun Block.isMined() = currentHash.startsWith(validPrefix)
+
+    private fun Block.nonceIncrement() = copy(nonce = nonce + 1)
+
+    override fun constructBlock(tx: Transaction): Block {
+        log.constructBlock(isHealthy, index)
+        return Block(previousHash = lastAddedIntoChainBlockHash)
+            .apply { addTransaction(tx) }
+            .calculateAndAssignHash()
+    }
 
     override fun mineBlock(block: Block, ignoreLog: Boolean): Block {
-        if (!ignoreLog) log.info("Mining: ${block.currentHash}")
+        if (block.isMined()) {
+            log.blockAlreadyMined(isHealthy, index, block.currentHash)
+            return block
+        }
+        if (!ignoreLog) log.startMining(isHealthy, index, block.currentHash)
 
         var minedBlock = block.copy()
-        while (!isMined(minedBlock)) {
-            minedBlock = minedBlock.copy(nonce = minedBlock.nonce + 1)
+        while (!minedBlock.isMined()) {
+            minedBlock = minedBlock.nonceIncrement()
         }
 
-        if (!ignoreLog) log.info("Mined : ${minedBlock.currentHash}")
+        if (!ignoreLog) log.endMining(isHealthy, index, block.currentHash)
 
+        chain.add(minedBlock)
+        lastAddedIntoChainBlockHash = minedBlock.currentHash
         return minedBlock
     }
 
-    override fun isChainValid(): Boolean {
+    override fun removeBlockFromChain() {
+        chain.removeLast()
+        lastAddedIntoChainBlockHash = chain.last().currentHash
+    }
+
+    /* Miner node actions */
+
+    /* Verify node actions */
+
+    private fun isChainValid(): Boolean {
         when {
             chain.isEmpty() -> return true
-            chain.size == 1 -> return chain[0].currentHash == chain[0].calculateBlockHash()
+            chain.size == 1 -> return chain[0].currentHash == chain[0].calculateHash()
             else -> {
                 for (i in 1 until chain.size) {
                     val previousBlock = chain[i - 1]
                     val currentBlock = chain[i]
 
                     when {
-                        currentBlock.currentHash != currentBlock.calculateBlockHash() -> return false
-                        currentBlock.previousHash != previousBlock.calculateBlockHash() -> return false
-                        !(isMined(previousBlock) && isMined(currentBlock)) -> return false
+                        currentBlock.currentHash != currentBlock.calculateHash() -> return false
+                        currentBlock.previousHash != previousBlock.calculateHash() -> return false
+                        !(previousBlock.isMined() && currentBlock.isMined()) -> return false
                     }
                 }
                 return true
@@ -143,16 +96,28 @@ class Node(
         }
     }
 
-    private fun isMined(block: Block): Boolean {
-        return block.currentHash.startsWith(validPrefix)
+    override fun verifyBlock(block: Block): Boolean {
+        log.startVerify(isHealthy, index, block.currentHash)
+        chain.add(block)
+
+        if (!isChainValid()) {
+            log.endVerify(isHealthy, index, block.currentHash, false)
+            chain.removeLast()
+            return false
+        }
+
+        log.endVerify(isHealthy, index, block.currentHash, true)
+        lastAddedIntoChainBlockHash = block.currentHash
+        amount += 1
+        return true
     }
+
+    /* Verify node actions */
 
     companion object {
         private val MONEY_INT: Int = 4
         private val MAX_MONEY: Int = 10000
         private val MIN_MONEY: Int = 100
-
-        private val EPSILON = 0.0000000001
 
         private val difficulty = 2
         private val validPrefix = "0".repeat(difficulty)
