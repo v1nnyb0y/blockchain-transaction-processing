@@ -17,6 +17,7 @@ class Node(
 ) : INode {
 
     private val log: Logger by logger()
+    private var ignoreLog: Boolean = true
 
     private var amount = Random.nextInt(MIN_MONEY, MAX_MONEY)
 
@@ -24,7 +25,8 @@ class Node(
     private var lastAddedIntoChainBlockHash: String = ""
 
     init {
-        mineBlock(constructBlock(Transaction()), true)
+        mineBlock(constructBlock(Transaction()))
+        ignoreLog = false
     }
 
     override fun isMiner(): Boolean = amount > (MAX_MONEY / 20)
@@ -42,15 +44,15 @@ class Node(
     private fun Block.nonceIncrement() = copy(nonce = nonce + 1)
 
     override fun constructBlock(tx: Transaction): Block {
-        log.constructBlock(isHealthy, index)
+        if (!ignoreLog) log.constructBlock(isHealthy, index)
         return Block(previousHash = lastAddedIntoChainBlockHash)
             .apply { addTransaction(tx) }
             .calculateAndAssignHash()
     }
 
-    override fun mineBlock(block: Block, ignoreLog: Boolean): Block {
+    override fun mineBlock(block: Block): Block {
         if (block.isMined()) {
-            log.blockAlreadyMined(isHealthy, index, block.currentHash)
+            if (!ignoreLog) log.blockAlreadyMined(isHealthy, index, block.currentHash)
             return block
         }
         if (!ignoreLog) log.startMining(isHealthy, index, block.currentHash)
@@ -97,16 +99,16 @@ class Node(
     }
 
     override fun verifyBlock(block: Block): Boolean {
-        log.startVerify(isHealthy, index, block.currentHash)
+        if (!ignoreLog) log.startVerify(isHealthy, index, block.currentHash)
         chain.add(block)
 
         if (!isChainValid()) {
-            log.endVerify(isHealthy, index, block.currentHash, false)
+            if (!ignoreLog) log.endVerify(isHealthy, index, block.currentHash, false)
             chain.removeLast()
             return false
         }
 
-        log.endVerify(isHealthy, index, block.currentHash, true)
+        if (!ignoreLog) log.endVerify(isHealthy, index, block.currentHash, true)
         lastAddedIntoChainBlockHash = block.currentHash
         amount += 1
         return true
