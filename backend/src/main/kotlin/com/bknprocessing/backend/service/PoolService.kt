@@ -34,8 +34,8 @@ class PoolService(
 
     private val log: Logger by logger()
 
-    private var isFinished: Boolean = false
-    val nodes = mutableListOf<INode>()
+    var isFinished: Boolean = false
+    private val nodes = mutableListOf<INode>()
 
     @OptIn(ObsoleteCoroutinesApi::class)
     private val blockVerificationChannel = BroadcastChannel<VerificationDto>(capacity = nodesCount * nodesCount)
