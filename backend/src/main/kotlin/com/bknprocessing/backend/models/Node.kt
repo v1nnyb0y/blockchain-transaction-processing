@@ -64,7 +64,9 @@ class Node(
 
         var minedBlock = block.copy()
         while (!minedBlock.isMined()) {
-            minedBlock = minedBlock.nonceIncrement()
+            minedBlock = minedBlock
+                .nonceIncrement()
+                .calculateAndAssignHash()
         }
 
         if (!ignoreLog) log.endMining(isHealthy, index, block.currentHash)

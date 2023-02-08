@@ -15,9 +15,9 @@ import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import org.slf4j.Logger
 
 class PoolService(
@@ -51,7 +51,7 @@ class PoolService(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, ObsoleteCoroutinesApi::class)
-    suspend fun run(numberOfTransactions: Int) = coroutineScope {
+    suspend fun run(numberOfTransactions: Int) = supervisorScope {
         for (i in 0 until nodes.size) {
             launch { doMine(nodes[i]) }
             launch { doVerify(nodes[i]) }
@@ -63,7 +63,7 @@ class PoolService(
                 !blockVerificationResultChannel.isEmpty ||
                 !blockVerificationChannel.openSubscription().isEmpty
             ) {
-                delay(DELAY)
+                delay(DELAY_MILSECS)
                 log.waitAllChannelEmpty(
                     isTransactionChannelEmpty = transactionChannel.isEmpty,
                     isBlockVerificationChannelEmpty = blockVerificationChannel.openSubscription().isEmpty,
@@ -79,7 +79,7 @@ class PoolService(
     private suspend fun doMine(node: INode) {
         if (node.isMiner()) {
             while (!isFinished) {
-                delay(DELAY)
+                delay(DELAY_MILSECS)
                 val trans = transactionChannel.tryReceive().getOrNull() ?: continue
                 numberOfHandledTransactions += 1
 
@@ -100,7 +100,7 @@ class PoolService(
                 log.startNetworkVerify(node.isHealthy, node.index, minedBlock.currentHash)
                 while (countOfFinishedNodes != nodesCount - 1) {
                     // TODO add checking on 80% of the success nodes
-                    delay(DELAY)
+                    delay(DELAY_MILSECS)
 
                     val verificationResult =
                         blockVerificationResultChannel.tryReceive().getOrNull() ?: continue
@@ -132,7 +132,7 @@ class PoolService(
     private suspend fun doVerify(node: INode) {
         val blockVerificationReceiveChannel = blockVerificationChannel.openSubscription()
         while (!isFinished) {
-            delay(DELAY)
+            delay(DELAY_MILSECS)
             val verificationDto = blockVerificationReceiveChannel.tryReceive().getOrNull() ?: continue
             if (verificationDto.nodeIndex == node.index) continue
 
@@ -147,9 +147,10 @@ class PoolService(
         }
     }
 
-    private fun doSendTransactions(numberOfTransactions: Int) {
+    private suspend fun doSendTransactions(numberOfTransactions: Int) {
         var i = 1
         while (i <= numberOfTransactions) {
+            delay(DELAY_MILSECS)
             val result = transactionChannel.trySend(Transaction())
             if (result.isSuccess) {
                 i += 1
@@ -159,7 +160,7 @@ class PoolService(
 
     companion object {
         private const val EPSILON = 0.0000000001
-        private const val DELAY: Long = 100
+        private const val DELAY_MILSECS: Long = 100
     }
 
     /*
