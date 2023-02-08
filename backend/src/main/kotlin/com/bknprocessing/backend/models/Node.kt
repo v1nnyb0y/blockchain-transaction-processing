@@ -25,7 +25,12 @@ class Node(
     private var lastAddedIntoChainBlockHash: String = ""
 
     init {
-        mineBlock(constructBlock(Transaction()))
+        mineBlock(
+            Block(previousHash = lastAddedIntoChainBlockHash)
+                .apply { addTransaction(Transaction()) }
+                .calculateAndAssignHash()
+        )
+        // mineBlock(constructBlock(Transaction()))
         ignoreLog = false
     }
 
