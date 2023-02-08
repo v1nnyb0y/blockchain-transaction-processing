@@ -19,7 +19,7 @@ fun Logger.waitAllChannelEmpty(
     info(
         StringBuilder()
             .append("transaction-channel-empty = $isTransactionChannelEmpty; ")
-            .append("block-verification-channel-empty = $isBlockVerificationChannelEmpty")
+            .append("block-verification-channel-empty = $isBlockVerificationChannelEmpty; ")
             .append("block-verification-result-channel-empty = $isBlockVerificationResultChannelEmpty")
             .toString()
     )
