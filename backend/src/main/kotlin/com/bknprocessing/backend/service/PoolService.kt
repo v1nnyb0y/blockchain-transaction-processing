@@ -15,9 +15,9 @@ import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import org.slf4j.Logger
 
 class PoolService(
@@ -51,7 +51,7 @@ class PoolService(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, ObsoleteCoroutinesApi::class)
-    suspend fun run(numberOfTransactions: Int) = supervisorScope {
+    suspend fun run(numberOfTransactions: Int) = coroutineScope {
         for (i in 0 until nodes.size) {
             launch { doMine(nodes[i]) }
             launch { doVerify(nodes[i]) }
