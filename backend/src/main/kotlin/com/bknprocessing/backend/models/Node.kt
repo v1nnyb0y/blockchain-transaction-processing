@@ -1,6 +1,5 @@
 package com.bknprocessing.backend.models
 
-import com.bknprocessing.backend.utils.blockAlreadyMined
 import com.bknprocessing.backend.utils.constructBlock
 import com.bknprocessing.backend.utils.endMining
 import com.bknprocessing.backend.utils.endVerify
@@ -56,10 +55,10 @@ class Node(
     }
 
     override fun mineBlock(block: Block): Block {
-        if (block.isMined()) {
+        /*if (block.isMined()) {
             if (!ignoreLog) log.blockAlreadyMined(isHealthy, index, block.currentHash)
             return block
-        }
+        }*/
         if (!ignoreLog) log.startMining(isHealthy, index, block.currentHash)
 
         var minedBlock = block.copy()

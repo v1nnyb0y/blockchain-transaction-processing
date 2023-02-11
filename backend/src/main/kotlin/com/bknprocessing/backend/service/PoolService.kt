@@ -29,6 +29,8 @@ class PoolService(
     var numberOfHandledTransactions: Int = 0
     var numberOfHandledVerification: Int = 0
     var numberOfHandledVerificationResult: Int = 0
+    var numberOfSuccessVerifiedTransactions: Int = 0
+    var numberOfResendVerificationResult: Int = 0
     /* Test data (for unit-testing) */
 
     private val log: Logger by logger()
@@ -59,15 +61,20 @@ class PoolService(
 
         launch {
             doSendTransactions(numberOfTransactions)
-            while (!transactionChannel.isEmpty ||
-                !blockVerificationResultChannel.isEmpty ||
-                !blockVerificationChannel.openSubscription().isEmpty
+            while (
+                numberOfHandledTransactions != numberOfTransactions ||
+                numberOfHandledVerification < numberOfTransactions * (nodesCount - 1) ||
+                numberOfHandledVerificationResult < numberOfTransactions * (nodesCount - 1)
             ) {
                 delay(DELAY_MILSECS)
                 log.waitAllChannelEmpty(
                     isTransactionChannelEmpty = transactionChannel.isEmpty,
                     isBlockVerificationChannelEmpty = blockVerificationChannel.openSubscription().isEmpty,
-                    isBlockVerificationResultChannelEmpty = blockVerificationResultChannel.isEmpty
+                    isBlockVerificationResultChannelEmpty = blockVerificationResultChannel.isEmpty,
+                    numberOfHandledTransactions = numberOfHandledTransactions,
+                    numberOfHandledBlocksForVerification = numberOfHandledVerification,
+                    numberOfHandledResultsOfVerification = numberOfHandledVerificationResult,
+                    numberOfResendResultsOfVerification = numberOfResendVerificationResult
                 )
             }
 
@@ -111,9 +118,11 @@ class PoolService(
                         countOfFinishedNodes += 1
 
                         if (verificationResult.verificationResult) {
+                            numberOfSuccessVerifiedTransactions += 1
                             countOfSuccessVerificationNodes += 1
                         }
                     } else {
+                        numberOfResendVerificationResult += 1
                         blockVerificationResultChannel.send(verificationResult)
                     }
                 }

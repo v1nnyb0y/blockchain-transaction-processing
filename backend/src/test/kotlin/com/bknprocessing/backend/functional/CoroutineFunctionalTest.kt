@@ -65,4 +65,18 @@ class CoroutineFunctionalTest {
             posPoolService.numberOfHandledVerificationResult
         )
     }
+
+    @Test
+    fun number_of_failed_verifications_should_less_or_equal_than_unhealthy_nodes() = runBlocking {
+        posPoolService.run(Predefined.FUNCTIONAL_NUMBER_OF_TRANSACTIONS)
+        while (!posPoolService.isFinished) {
+            delay(100)
+        }
+
+        delay(500)
+        Assertions.assertTrue(
+            Predefined.FUNCTIONAL_NUMBER_OF_TRANSACTIONS -
+                posPoolService.numberOfSuccessVerifiedTransactions <= Predefined.FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES
+        )
+    }
 }

@@ -14,13 +14,21 @@ private fun buildStringBuilder(isNodeHealthy: Boolean, index: Int): StringBuilde
 fun Logger.waitAllChannelEmpty(
     isTransactionChannelEmpty: Boolean,
     isBlockVerificationChannelEmpty: Boolean,
-    isBlockVerificationResultChannelEmpty: Boolean
+    isBlockVerificationResultChannelEmpty: Boolean,
+    numberOfHandledTransactions: Int,
+    numberOfHandledBlocksForVerification: Int,
+    numberOfHandledResultsOfVerification: Int,
+    numberOfResendResultsOfVerification: Int
 ) =
     info(
         StringBuilder()
             .append("transaction-channel-empty = $isTransactionChannelEmpty; ")
             .append("block-verification-channel-empty = $isBlockVerificationChannelEmpty; ")
-            .append("block-verification-result-channel-empty = $isBlockVerificationResultChannelEmpty")
+            .append("block-verification-result-channel-empty = $isBlockVerificationResultChannelEmpty; ")
+            .append("number of handled transactions = $numberOfHandledTransactions; ")
+            .append("number of handled blocks = $numberOfHandledBlocksForVerification; ")
+            .append("number of handled results of verification = $numberOfHandledResultsOfVerification; ")
+            .append("number of resend verification results = $numberOfHandledResultsOfVerification")
             .toString()
     )
 
