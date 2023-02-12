@@ -9,6 +9,7 @@ import com.bknprocessing.backend.type.ValidatorAlgorithm
 import com.bknprocessing.backend.utils.endNetworkVerify
 import com.bknprocessing.backend.utils.logger
 import com.bknprocessing.backend.utils.startNetworkVerify
+import com.bknprocessing.backend.utils.startNode
 import com.bknprocessing.backend.utils.waitAllChannelEmpty
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
@@ -21,23 +22,23 @@ import kotlinx.coroutines.supervisorScope
 import org.slf4j.Logger
 import java.time.Instant
 
-class PoolService(
+open class PoolService(
     val nodesCount: Int,
     val unhealthyNodesCount: Int,
     val validatorAlgorithm: ValidatorAlgorithm
 ) {
     /* Test data (for unit-testing) */
-    var numberOfHandledTransactions: Int = 0
-    var numberOfHandledVerification: Int = 0
-    var numberOfHandledVerificationResult: Int = 0
-    var numberOfSuccessVerifiedTransactions: Int = 0
-    var numberOfResendVerificationResult: Int = 0
+    protected var numberOfHandledTransactions: Int = 0
+    protected var numberOfHandledVerification: Int = 0
+    protected var numberOfHandledVerificationResult: Int = 0
+    protected var numberOfSuccessVerifiedTransactions: Int = 0
+    protected var numberOfResendVerificationResult: Int = 0
     /* Test data (for unit-testing) */
 
     private val log: Logger by logger()
 
     var isFinished: Boolean = false
-    private val nodes = mutableListOf<INode>()
+    protected val nodes = mutableListOf<INode>()
 
     @OptIn(ObsoleteCoroutinesApi::class)
     private val blockVerificationChannel = BroadcastChannel<VerificationDto>(capacity = nodesCount * nodesCount)
@@ -46,11 +47,14 @@ class PoolService(
 
     init {
         val createdAt = Instant.now().toEpochMilli()
-        for (idx in 0..nodesCount - unhealthyNodesCount) {
-            nodes.add(Node(index = idx, isHealthy = true, createdAt = createdAt))
+        var nodeIndex = 0
+        for (idx in 0 until nodesCount - unhealthyNodesCount) {
+            nodes.add(Node(index = nodeIndex, isHealthy = true, createdAt = createdAt))
+            nodeIndex += 1
         }
-        for (idx in 0..unhealthyNodesCount) {
-            nodes.add(Node(index = idx, isHealthy = false, createdAt = createdAt))
+        for (idx in 0 until unhealthyNodesCount) {
+            nodes.add(Node(index = nodeIndex, isHealthy = false, createdAt = createdAt))
+            nodeIndex += 1
         }
     }
 
@@ -59,6 +63,10 @@ class PoolService(
         for (i in 0 until nodes.size) {
             launch { doMine(nodes[i]) }
             launch { doVerify(nodes[i]) }
+            log.startNode(
+                nodes[i].isHealthy,
+                nodes[i].index
+            )
         }
 
         launch {

@@ -11,6 +11,13 @@ private fun buildStringBuilder(isNodeHealthy: Boolean, index: Int): StringBuilde
     return StringBuilder("Node with index: $index ($healthyStr) ")
 }
 
+fun Logger.startNode(isNodeHealthy: Boolean, index: Int) =
+    info(
+        buildStringBuilder(isNodeHealthy, index)
+            .append("is started")
+            .toString()
+    )
+
 fun Logger.waitAllChannelEmpty(
     isTransactionChannelEmpty: Boolean,
     isBlockVerificationChannelEmpty: Boolean,
@@ -28,7 +35,7 @@ fun Logger.waitAllChannelEmpty(
             .append("number of handled transactions = $numberOfHandledTransactions; ")
             .append("number of handled blocks = $numberOfHandledBlocksForVerification; ")
             .append("number of handled results of verification = $numberOfHandledResultsOfVerification; ")
-            .append("number of resend verification results = $numberOfHandledResultsOfVerification")
+            .append("number of resend verification results = $numberOfResendResultsOfVerification")
             .toString()
     )
 

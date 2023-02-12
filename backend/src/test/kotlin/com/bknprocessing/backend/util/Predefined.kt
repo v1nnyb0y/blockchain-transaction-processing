@@ -22,9 +22,9 @@ class Predefined {
 
         /* Functional Tests */
 
-        const val FUNCTIONAL_NUMBER_OF_INSTANCES = 2
-        const val FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES = 0
-        const val FUNCTIONAL_NUMBER_OF_TRANSACTIONS = 1
+        const val FUNCTIONAL_NUMBER_OF_INSTANCES = 10
+        const val FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES = 2
+        const val FUNCTIONAL_NUMBER_OF_TRANSACTIONS = 10
 
         /* Functional Test */
     }

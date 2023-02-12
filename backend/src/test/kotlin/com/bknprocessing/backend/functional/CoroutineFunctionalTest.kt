@@ -13,15 +13,43 @@ import org.springframework.boot.test.context.SpringBootTest
 @SpringBootTest
 class CoroutineFunctionalTest {
 
-    private lateinit var posPoolService: PoolService
+    class TestPoolService(nodesCount: Int, unhealthyNodesCount: Int, validatorAlgorithm: ValidatorAlgorithm) :
+        PoolService(nodesCount, unhealthyNodesCount, validatorAlgorithm) {
+        fun getInstances() = nodes
+        fun getNumberOfHandledTrans() = numberOfHandledTransactions
+        fun getNumberOfHandledVerifies() = numberOfHandledVerification
+        fun getNumberOfHandledVerifiesResult() = numberOfHandledVerificationResult
+        fun getNumberOfSuccessVerifications() = numberOfSuccessVerifiedTransactions
+    }
+
+    private lateinit var posPoolService: TestPoolService
 
     @BeforeEach
     fun setup() {
-        posPoolService = PoolService(
+        posPoolService = TestPoolService(
             Predefined.FUNCTIONAL_NUMBER_OF_INSTANCES,
             Predefined.FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES,
             ValidatorAlgorithm.ProofOfState
         )
+    }
+
+    @Test
+    fun created_correct_number_of_nodes() {
+        var numberOfHealthy: Int = 0
+        var numberOfUnhealthy: Int = 0
+        for (node in posPoolService.getInstances()) {
+            if (node.isHealthy) {
+                numberOfHealthy += 1
+            } else {
+                numberOfUnhealthy += 1
+            }
+        }
+
+        Assertions.assertEquals(
+            numberOfHealthy,
+            Predefined.FUNCTIONAL_NUMBER_OF_INSTANCES - Predefined.FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES
+        )
+        Assertions.assertEquals(numberOfUnhealthy, Predefined.FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES)
     }
 
     @Test
@@ -34,7 +62,7 @@ class CoroutineFunctionalTest {
         delay(500)
         Assertions.assertEquals(
             Predefined.FUNCTIONAL_NUMBER_OF_TRANSACTIONS,
-            posPoolService.numberOfHandledTransactions
+            posPoolService.getNumberOfHandledTrans()
         )
     }
 
@@ -48,7 +76,7 @@ class CoroutineFunctionalTest {
         delay(500)
         Assertions.assertEquals(
             Predefined.FUNCTIONAL_NUMBER_OF_TRANSACTIONS * (Predefined.FUNCTIONAL_NUMBER_OF_INSTANCES - 1),
-            posPoolService.numberOfHandledVerification
+            posPoolService.getNumberOfHandledVerifies()
         )
     }
 
@@ -62,11 +90,11 @@ class CoroutineFunctionalTest {
         delay(500)
         Assertions.assertEquals(
             Predefined.FUNCTIONAL_NUMBER_OF_INSTANCES * (Predefined.FUNCTIONAL_NUMBER_OF_INSTANCES - 1),
-            posPoolService.numberOfHandledVerificationResult
+            posPoolService.getNumberOfHandledVerifiesResult()
         )
     }
 
-    @Test
+    @Test // should be failed, cause isHealthy functionality is not implemented
     fun number_of_failed_verifications_should_less_or_equal_than_unhealthy_nodes() = runBlocking {
         posPoolService.run(Predefined.FUNCTIONAL_NUMBER_OF_TRANSACTIONS)
         while (!posPoolService.isFinished) {
@@ -76,7 +104,39 @@ class CoroutineFunctionalTest {
         delay(500)
         Assertions.assertTrue(
             Predefined.FUNCTIONAL_NUMBER_OF_TRANSACTIONS -
-                posPoolService.numberOfSuccessVerifiedTransactions <= Predefined.FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES
+                    posPoolService.getNumberOfSuccessVerifications() <= Predefined.FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES
         )
+    }
+
+    @Test
+    fun all_nodes_has_unique_index() {
+        val indexes: MutableMap<Int, Boolean> = HashMap()
+        var result = true
+        for (node in posPoolService.getInstances()) {
+            if (indexes.containsKey(node.index)) {
+                result = false
+                break
+            }
+
+            indexes[node.index] = true
+        }
+
+        Assertions.assertTrue(result)
+    }
+
+    @Test
+    fun at_least_one_miner_and_one_verifier() {
+        var oneMiner = false
+        var oneVerifier = false
+
+        for (node in posPoolService.getInstances()) {
+            oneMiner = oneMiner || node.isMiner()
+            oneVerifier = oneVerifier || !node.isMiner()
+
+            if (oneMiner && oneVerifier) break;
+        }
+
+        Assertions.assertTrue(oneMiner)
+        Assertions.assertTrue(oneVerifier)
     }
 }

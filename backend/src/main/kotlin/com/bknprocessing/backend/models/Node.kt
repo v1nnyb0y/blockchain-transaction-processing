@@ -27,12 +27,21 @@ open class Node(
     protected var lastAddedIntoChainBlockHash: String = ""
 
     init {
-        amount = if (index == 0) MAX_MONEY else 0
-        val minedBlock = mineBlock(
-            Block(previousHash = StringBuilder(lastAddedIntoChainBlockHash).toString(), timestamp = createdAt)
-                .calculateAndAssignHash()
+        // Don't fix it. One miner and one verifier should be 100%
+        if (index == 0) amount = MAX_MONEY
+        if (index == 1) amount = 0
+
+        // TODO Vitalii look on it
+        if (index != 0) {
+            amount = 0
+        }
+
+        addBlockToChain(
+            mineBlock(
+                Block(previousHash = StringBuilder(lastAddedIntoChainBlockHash).toString(), timestamp = createdAt)
+                    .calculateAndAssignHash()
+            )!!
         )
-        lastAddedIntoChainBlockHash = StringBuilder(minedBlock!!.currentHash).toString()
         ignoreLog = false
     }
 
@@ -121,7 +130,7 @@ open class Node(
 
         if (!ignoreLog) log.endVerify(isHealthy, index, block.currentHash, true)
         lastAddedIntoChainBlockHash = StringBuilder(block.currentHash).toString()
-        // amount += 1
+        amount += 1
         return true
     }
 
