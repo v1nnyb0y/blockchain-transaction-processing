@@ -18,9 +18,7 @@ class BlockFunctionalTest {
     @Test
     fun adding_transaction_to_block_success() {
         Assertions.assertEquals(block.transactions.size, 0)
-
         block.addTransaction(Transaction())
-
         Assertions.assertEquals(block.transactions.size, 1)
     }
 }

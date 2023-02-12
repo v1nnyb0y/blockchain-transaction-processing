@@ -19,6 +19,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.slf4j.Logger
+import java.time.Instant
 
 class PoolService(
     val nodesCount: Int,
@@ -44,11 +45,12 @@ class PoolService(
     private val transactionChannel = Channel<Transaction>(capacity = 1)
 
     init {
+        val createdAt = Instant.now().toEpochMilli()
         for (idx in 0..nodesCount - unhealthyNodesCount) {
-            nodes.add(Node(index = idx, isHealthy = true))
+            nodes.add(Node(index = idx, isHealthy = true, createdAt = createdAt))
         }
         for (idx in 0..unhealthyNodesCount) {
-            nodes.add(Node(index = idx, isHealthy = false))
+            nodes.add(Node(index = idx, isHealthy = false, createdAt = createdAt))
         }
     }
 
@@ -91,7 +93,7 @@ class PoolService(
                 numberOfHandledTransactions += 1
 
                 val constructedBlock = node.constructBlock(trans)
-                val minedBlock = node.mineBlock(constructedBlock)
+                val minedBlock = node.mineBlock(constructedBlock) ?: continue
 
                 blockVerificationChannel.send(
                     VerificationDto(
@@ -118,7 +120,6 @@ class PoolService(
                         countOfFinishedNodes += 1
 
                         if (verificationResult.verificationResult) {
-                            numberOfSuccessVerifiedTransactions += 1
                             countOfSuccessVerificationNodes += 1
                         }
                     } else {
@@ -128,10 +129,12 @@ class PoolService(
                 }
 
                 if (countOfSuccessVerificationNodes / (nodesCount - 1) - 0.8 >= EPSILON) {
+                    numberOfSuccessVerifiedTransactions += 1
                     log.endNetworkVerify(node.isHealthy, node.index, minedBlock.currentHash, true)
+                    node.addBlockToChain(minedBlock)
                 } else {
                     log.endNetworkVerify(node.isHealthy, node.index, minedBlock.currentHash, false)
-                    node.removeBlockFromChain()
+                    // node.removeBlockFromChain()
                 }
             }
         }
