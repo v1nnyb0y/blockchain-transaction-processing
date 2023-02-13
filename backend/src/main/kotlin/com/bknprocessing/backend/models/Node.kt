@@ -16,6 +16,7 @@ import kotlin.random.Random
 open class Node(
     final override val index: Int,
     final override val id: UUID = UUID.randomUUID(),
+    final override var amount: Int = Random.nextInt(MIN_MONEY, MAX_MONEY),
     override val isHealthy: Boolean,
     protected val createdAt: Long,
 ) : INode {
@@ -23,7 +24,6 @@ open class Node(
     private val log: Logger by logger()
     private var ignoreLog: Boolean = true
 
-    protected var amount = Random.nextInt(MIN_MONEY, MAX_MONEY)
     protected var chain: MutableList<Block> = mutableListOf()
     protected var lastAddedIntoChainBlockHash: String = ""
 
@@ -42,7 +42,7 @@ open class Node(
                 Block(
                     previousHash = StringBuilder(lastAddedIntoChainBlockHash).toString(),
                     timestamp = createdAt,
-                    generatedBy = this.id
+                    generatedBy = this.id,
                 ).calculateAndSetCurrentHash(),
             )!!, // TODO FIX NPE (Cover Test)
         )

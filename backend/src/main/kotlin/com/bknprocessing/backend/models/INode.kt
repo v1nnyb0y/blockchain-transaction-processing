@@ -5,6 +5,7 @@ import java.util.UUID
 interface INode {
     val index: Int
     val id: UUID
+    var amount: Int
     val isHealthy: Boolean
 
     fun constructBlock(tx: Transaction): Block
