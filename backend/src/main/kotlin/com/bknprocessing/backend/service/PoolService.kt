@@ -151,20 +151,36 @@ open class PoolService(
                     // TODO Vadim: where is the synchronization chain for all others nodes?
 
                     // TODO Do after synchronization:
-                    val nextIterationMinerIndex = -1
-                    val indexesToCountVerifiedBlocks: Map<Int, VerifiedBlocksAndAmount> =
+                    val indexesToCountVerifiedBlocks: Map<Int, VerifiedBlocksAndAmountInfo> =
                         nodes.associate {
-                            it.index to VerifiedBlocksAndAmount(
+                            it.index to VerifiedBlocksAndAmountInfo(
                                 blocksCount = node.countBlocksCreatedByNodeInChain(it.id),
                                 amount = it.amount,
                             )
                         }
+                    val nextIterationMinerIndex = determineNextIterationMinerIndex(indexesToCountVerifiedBlocks)
+                    // TODO set nextIterationMiner
                 } else {
                     log.endNetworkVerify(node.isHealthy, node.index, minedBlock.currentHash, false)
                     // node.removeBlockFromChain()
                 }
             }
         }
+    }
+
+    private fun determineNextIterationMinerIndex(nodesMap: Map<Int, VerifiedBlocksAndAmountInfo>): Int {
+        if (nodesMap.size < 2) {
+            throw IllegalStateException("Determine index process: Node size is incorrect")
+        }
+        var leaderValue = -1
+        var leaderIndex = -1
+        nodesMap.entries.forEach {
+            if (leaderValue < it.value.amount) { // TODO improve formula according blocksCount value
+                leaderValue = it.value.amount
+                leaderIndex = it.key
+            }
+        }
+        return leaderIndex
     }
 
     @OptIn(ObsoleteCoroutinesApi::class)
@@ -186,7 +202,7 @@ open class PoolService(
         }
     }
 
-    inner class VerifiedBlocksAndAmount(
+    inner class VerifiedBlocksAndAmountInfo(
         val blocksCount: Long,
         val amount: Int,
     )
