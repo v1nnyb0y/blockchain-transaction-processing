@@ -25,7 +25,7 @@ import java.time.Instant
 open class PoolService(
     val nodesCount: Int,
     val unhealthyNodesCount: Int,
-    val validatorAlgorithm: ValidatorAlgorithm
+    val validatorAlgorithm: ValidatorAlgorithm,
 ) {
     /* Test data (for unit-testing) */
     protected var numberOfHandledTransactions: Int = 0
@@ -65,7 +65,7 @@ open class PoolService(
             launch { doVerify(nodes[i]) }
             log.startNode(
                 nodes[i].isHealthy,
-                nodes[i].index
+                nodes[i].index,
             )
         }
 
@@ -84,7 +84,7 @@ open class PoolService(
                     numberOfHandledTransactions = numberOfHandledTransactions,
                     numberOfHandledBlocksForVerification = numberOfHandledVerification,
                     numberOfHandledResultsOfVerification = numberOfHandledVerificationResult,
-                    numberOfResendResultsOfVerification = numberOfResendVerificationResult
+                    numberOfResendResultsOfVerification = numberOfResendVerificationResult,
                 )
             }
 
@@ -106,8 +106,8 @@ open class PoolService(
                 blockVerificationChannel.send(
                     VerificationDto(
                         block = minedBlock,
-                        nodeIndex = node.index
-                    )
+                        nodeIndex = node.index,
+                    ),
                 )
 
                 // Start verification by nodes in network
@@ -161,8 +161,8 @@ open class PoolService(
                 VerificationResultDto(
                     blockHash = verificationDto.block.currentHash,
                     nodeIndex = verificationDto.nodeIndex,
-                    verificationResult = node.verifyBlock(verificationDto.block)
-                )
+                    verificationResult = node.verifyBlock(verificationDto.block),
+                ),
             )
         }
     }

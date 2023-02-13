@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class BackendApplicationController(
-    val blockChainService: BlockChainService
+    val blockChainService: BlockChainService,
 ) {
 
     val log: Logger by logger()
@@ -29,7 +29,7 @@ class BackendApplicationController(
             numberOfTransactions = configuration.numberOfTransactions,
             numberOfUnhealthyNodes = configuration.numberOfUnhealthyNodes,
             stateTransferApproach = configuration.stateTransferApproach,
-            validatorAlgorithm = configuration.validatorAlgo
+            validatorAlgorithm = configuration.validatorAlgo,
         )
     }
 }

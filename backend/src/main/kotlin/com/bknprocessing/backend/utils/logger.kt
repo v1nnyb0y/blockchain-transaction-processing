@@ -15,7 +15,7 @@ fun Logger.startNode(isNodeHealthy: Boolean, index: Int) =
     info(
         buildStringBuilder(isNodeHealthy, index)
             .append("is started")
-            .toString()
+            .toString(),
     )
 
 fun Logger.waitAllChannelEmpty(
@@ -25,7 +25,7 @@ fun Logger.waitAllChannelEmpty(
     numberOfHandledTransactions: Int,
     numberOfHandledBlocksForVerification: Int,
     numberOfHandledResultsOfVerification: Int,
-    numberOfResendResultsOfVerification: Int
+    numberOfResendResultsOfVerification: Int,
 ) =
     info(
         StringBuilder()
@@ -36,61 +36,61 @@ fun Logger.waitAllChannelEmpty(
             .append("number of handled blocks = $numberOfHandledBlocksForVerification; ")
             .append("number of handled results of verification = $numberOfHandledResultsOfVerification; ")
             .append("number of resend verification results = $numberOfResendResultsOfVerification")
-            .toString()
+            .toString(),
     )
 
 fun Logger.constructBlock(isNodeHealthy: Boolean, index: Int) =
     info(
         buildStringBuilder(isNodeHealthy, index)
             .append("is constructing block")
-            .toString()
+            .toString(),
     )
 
 fun Logger.startMining(isNodeHealthy: Boolean, index: Int, blockHash: String) =
     info(
         buildStringBuilder(isNodeHealthy, index)
             .append("is started mining block (hash = $blockHash)")
-            .toString()
+            .toString(),
     )
 
 fun Logger.endMining(isNodeHealthy: Boolean, index: Int, blockHash: String) =
     info(
         buildStringBuilder(isNodeHealthy, index)
             .append("is finished mining block (hash = $blockHash)")
-            .toString()
+            .toString(),
     )
 
 fun Logger.blockAlreadyMined(isNodeHealthy: Boolean, index: Int, blockHash: String) =
     info(
         buildStringBuilder(isNodeHealthy, index)
             .append("is mined block (already mined) (hash = $blockHash)")
-            .toString()
+            .toString(),
     )
 
 fun Logger.startVerify(isNodeHealthy: Boolean, index: Int, blockHash: String) =
     info(
         buildStringBuilder(isNodeHealthy, index)
             .append("is started verifying block (hash = $blockHash)")
-            .toString()
+            .toString(),
     )
 
 fun Logger.endVerify(isNodeHealthy: Boolean, index: Int, blockHash: String, isSuccess: Boolean) =
     info(
         buildStringBuilder(isNodeHealthy, index)
             .append("is finished (${if (isSuccess) "SUCCESS" else "FAILED"}) verifying block (hash = $blockHash)")
-            .toString()
+            .toString(),
     )
 
 fun Logger.startNetworkVerify(isNodeHealthy: Boolean, index: Int, blockHash: String) =
     info(
         buildStringBuilder(isNodeHealthy, index)
             .append("is started verification block by network (hash = $blockHash)")
-            .toString()
+            .toString(),
     )
 
 fun Logger.endNetworkVerify(isNodeHealthy: Boolean, index: Int, blockHash: String, isSuccess: Boolean) =
     info(
         buildStringBuilder(isNodeHealthy, index)
             .append("is finished (${if (isSuccess) "SUCCESS" else "FAILED"}) verifying block (hash = $blockHash)")
-            .toString()
+            .toString(),
     )

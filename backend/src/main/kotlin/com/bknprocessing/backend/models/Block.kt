@@ -7,7 +7,7 @@ data class Block(
     val timestamp: Long = Instant.now().toEpochMilli(),
     val previousHash: String,
     var nonce: Long = 0,
-    val transactions: MutableList<Transaction> = mutableListOf()
+    val transactions: MutableList<Transaction> = mutableListOf(),
 ) {
 
     fun addTransaction(tx: Transaction) {

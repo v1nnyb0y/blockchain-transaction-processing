@@ -9,5 +9,5 @@ data class ExperimentDto(
     val numberOfTransactions: Int,
     val numberOfUnhealthyNodes: Int,
     val validatorAlgo: ValidatorAlgorithm,
-    val stateTransferApproach: StateTransferApproach
+    val stateTransferApproach: StateTransferApproach,
 )

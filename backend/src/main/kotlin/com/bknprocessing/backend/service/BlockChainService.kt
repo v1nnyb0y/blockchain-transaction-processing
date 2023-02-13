@@ -12,7 +12,7 @@ class BlockChainService {
         numberOfTransactions: Int = 100,
         numberOfUnhealthyNodes: Int = 0,
         validatorAlgorithm: ValidatorAlgorithm = ValidatorAlgorithm.ProofOfState,
-        stateTransferApproach: StateTransferApproach = StateTransferApproach.Coroutine
+        stateTransferApproach: StateTransferApproach = StateTransferApproach.Coroutine,
     ) {
         when (stateTransferApproach) {
             StateTransferApproach.Coroutine -> {
@@ -20,8 +20,8 @@ class BlockChainService {
                     PoolService(
                         nodesCount = numberOfInstances,
                         unhealthyNodesCount = numberOfUnhealthyNodes,
-                        validatorAlgorithm = validatorAlgorithm
-                    )
+                        validatorAlgorithm = validatorAlgorithm,
+                    ),
                 ) {
                     this.run(numberOfTransactions)
                 }
