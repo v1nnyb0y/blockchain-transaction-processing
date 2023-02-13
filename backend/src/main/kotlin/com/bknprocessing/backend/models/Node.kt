@@ -124,7 +124,7 @@ open class Node(
     /* Miner node actions */
 
     final override fun addBlockToChain(block: Block) {
-        chain.add(block)
+        chain.add(block) // TODO Vadim: where is the synchronization chain for all others nodes?
         lastAddedIntoChainBlockHash = StringBuilder(block.currentHash).toString()
     }
 

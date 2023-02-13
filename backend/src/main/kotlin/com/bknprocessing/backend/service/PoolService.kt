@@ -118,7 +118,7 @@ open class PoolService(
 
                     val verificationResult =
                         blockVerificationResultChannel.tryReceive().getOrNull() ?: continue
-                    if (minedBlock.currentHash == verificationResult.blockHash &&
+                    if (minedBlock.currentHash == verificationResult.blockHash && // TODO complicated logic fix
                         node.index == verificationResult.nodeIndex
                     ) {
                         numberOfHandledVerificationResult += 1
