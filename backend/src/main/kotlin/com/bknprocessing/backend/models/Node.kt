@@ -136,6 +136,11 @@ open class Node(
         // lastAddedIntoChainBlockHash = chain.last().currentHash
     }
 
+    override fun countBlocksCreatedByNodeInChain(nodeId: UUID): Long {
+        // TODO Vadim impl run for all chain and calculate blocks count by current node
+        return 0
+    }
+
     companion object {
 //        protected const val MONEY_INT: Int = 4
         protected const val MAX_MONEY: Int = 10000

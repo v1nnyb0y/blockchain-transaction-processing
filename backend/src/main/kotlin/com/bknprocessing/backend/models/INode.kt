@@ -18,5 +18,8 @@ interface INode {
 
     // todo use smart-contract for that operation
     fun addBlockToChain(block: Block)
+
     fun removeBlockFromChain()
+
+    fun countBlocksCreatedByNodeInChain(nodeId: UUID): Long
 }

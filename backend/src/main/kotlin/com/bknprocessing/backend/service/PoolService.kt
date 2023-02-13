@@ -89,6 +89,17 @@ open class PoolService(
         }
     }
 
+    private suspend fun doSendTransactions(numberOfTransactions: Int) {
+        var i = 1
+        while (i <= numberOfTransactions) {
+            delay(DELAY_MILSECS)
+            val result = transactionChannel.trySend(Transaction())
+            if (result.isSuccess) {
+                i += 1
+            }
+        }
+    }
+
     @OptIn(ObsoleteCoroutinesApi::class)
     private suspend fun doMine(node: INode) {
         if (node.isMiner()) {
@@ -138,6 +149,16 @@ open class PoolService(
                     log.endNetworkVerify(node.isHealthy, node.index, minedBlock.currentHash, true)
                     node.addBlockToChain(minedBlock)
                     // TODO Vadim: where is the synchronization chain for all others nodes?
+
+                    // TODO Do after synchronization:
+                    val nextIterationMinerIndex = -1
+                    val indexesToCountVerifiedBlocks: Map<Int, VerifiedBlocksAndAmount> =
+                        nodes.associate {
+                            it.index to VerifiedBlocksAndAmount(
+                                blocksCount = node.countBlocksCreatedByNodeInChain(it.id),
+                                amount = it.amount,
+                            )
+                        }
                 } else {
                     log.endNetworkVerify(node.isHealthy, node.index, minedBlock.currentHash, false)
                     // node.removeBlockFromChain()
@@ -165,16 +186,10 @@ open class PoolService(
         }
     }
 
-    private suspend fun doSendTransactions(numberOfTransactions: Int) {
-        var i = 1
-        while (i <= numberOfTransactions) {
-            delay(DELAY_MILSECS)
-            val result = transactionChannel.trySend(Transaction())
-            if (result.isSuccess) {
-                i += 1
-            }
-        }
-    }
+    inner class VerifiedBlocksAndAmount(
+        val blocksCount: Long,
+        val amount: Int,
+    )
 
     companion object {
         private const val EPSILON = 0.0000000001
