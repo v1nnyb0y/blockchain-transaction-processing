@@ -1,6 +1,5 @@
-package com.bknprocessing.backend.functional
+package com.bknprocessing.backend.service
 
-import com.bknprocessing.backend.service.PoolService
 import com.bknprocessing.backend.type.ValidatorAlgorithm
 import com.bknprocessing.backend.util.Predefined
 import com.bknprocessing.backend.util.Predefined.Companion.FUNCTIONAL_NUMBER_OF_TRANSACTIONS
@@ -13,7 +12,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 
 @SpringBootTest
-class CoroutineFunctionalTest {
+class PoolServiceTest {
 
     class TestPoolService(nodesCount: Int, unhealthyNodesCount: Int, validatorAlgorithm: ValidatorAlgorithm) :
         PoolService(nodesCount, unhealthyNodesCount, validatorAlgorithm) {

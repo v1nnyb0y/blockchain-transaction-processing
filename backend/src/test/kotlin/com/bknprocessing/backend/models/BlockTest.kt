@@ -1,13 +1,11 @@
-package com.bknprocessing.backend.functional
+package com.bknprocessing.backend.models
 
-import com.bknprocessing.backend.models.Block
-import com.bknprocessing.backend.models.Transaction
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
-class BlockFunctionalTest {
+class BlockTest {
 
     private lateinit var block: Block
 

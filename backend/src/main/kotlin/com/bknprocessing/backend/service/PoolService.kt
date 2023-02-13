@@ -6,6 +6,7 @@ import com.bknprocessing.backend.models.Transaction
 import com.bknprocessing.backend.service.dto.VerificationDto
 import com.bknprocessing.backend.service.dto.VerificationResultDto
 import com.bknprocessing.backend.type.ValidatorAlgorithm
+import com.bknprocessing.backend.utils.determineNextIterationMinerIndex
 import com.bknprocessing.backend.utils.endNetworkVerify
 import com.bknprocessing.backend.utils.logger
 import com.bknprocessing.backend.utils.startNetworkVerify
@@ -166,21 +167,6 @@ open class PoolService(
                 }
             }
         }
-    }
-
-    private fun determineNextIterationMinerIndex(nodesMap: Map<Int, VerifiedBlocksAndAmountInfo>): Int {
-        if (nodesMap.size < 2) {
-            throw IllegalStateException("Determine index process: Node size is incorrect")
-        }
-        var leaderValue = -1
-        var leaderIndex = -1
-        nodesMap.entries.forEach {
-            if (leaderValue < it.value.amount) { // TODO improve formula according blocksCount value
-                leaderValue = it.value.amount
-                leaderIndex = it.key
-            }
-        }
-        return leaderIndex
     }
 
     @OptIn(ObsoleteCoroutinesApi::class)

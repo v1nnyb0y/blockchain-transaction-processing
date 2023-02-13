@@ -1,15 +1,12 @@
-package com.bknprocessing.backend.functional
+package com.bknprocessing.backend.models
 
-import com.bknprocessing.backend.models.Block
-import com.bknprocessing.backend.models.Node
-import com.bknprocessing.backend.models.Transaction
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.util.UUID
 
-class NodeFunctionalTest {
+class NodeTest {
 
     class TestNode(index: Int, isHealthy: Boolean, createdAt: Long) : Node(
         index = index,
