@@ -1,7 +1,10 @@
 package com.bknprocessing.backend.models
 
+import java.util.UUID
+
 interface INode {
     val index: Int
+    val id: UUID
     val isHealthy: Boolean
 
     fun constructBlock(tx: Transaction): Block

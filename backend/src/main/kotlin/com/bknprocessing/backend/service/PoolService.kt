@@ -137,6 +137,7 @@ open class PoolService(
                     numberOfSuccessVerifiedTransactions += 1
                     log.endNetworkVerify(node.isHealthy, node.index, minedBlock.currentHash, true)
                     node.addBlockToChain(minedBlock)
+                    // TODO Vadim: where is the synchronization chain for all others nodes?
                 } else {
                     log.endNetworkVerify(node.isHealthy, node.index, minedBlock.currentHash, false)
                     // node.removeBlockFromChain()

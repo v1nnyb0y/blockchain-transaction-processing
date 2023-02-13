@@ -10,10 +10,12 @@ import com.bknprocessing.backend.utils.startMining
 import com.bknprocessing.backend.utils.startVerify
 import org.slf4j.Logger
 import java.lang.StringBuilder
+import java.util.UUID
 import kotlin.random.Random
 
 open class Node(
     final override val index: Int,
+    final override val id: UUID = UUID.randomUUID(),
     override val isHealthy: Boolean,
     protected val createdAt: Long,
 ) : INode {
@@ -40,6 +42,7 @@ open class Node(
                 Block(
                     previousHash = StringBuilder(lastAddedIntoChainBlockHash).toString(),
                     timestamp = createdAt,
+                    generatedBy = this.id
                 ).calculateAndSetCurrentHash(),
             )!!, // TODO FIX NPE (Cover Test)
         )
@@ -58,7 +61,7 @@ open class Node(
 
     override fun constructBlock(tx: Transaction): Block {
         if (!ignoreLog) log.constructBlock(isHealthy, index)
-        return Block(previousHash = StringBuilder(lastAddedIntoChainBlockHash).toString())
+        return Block(previousHash = StringBuilder(lastAddedIntoChainBlockHash).toString(), generatedBy = this.id)
             .apply { addTransaction(tx) }
             .calculateAndSetCurrentHash()
     }
@@ -124,7 +127,7 @@ open class Node(
     /* Miner node actions */
 
     final override fun addBlockToChain(block: Block) {
-        chain.add(block) // TODO Vadim: where is the synchronization chain for all others nodes?
+        chain.add(block)
         lastAddedIntoChainBlockHash = StringBuilder(block.currentHash).toString()
     }
 

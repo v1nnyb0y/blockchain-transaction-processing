@@ -7,10 +7,15 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Instant
+import java.util.UUID
 
 class NodeFunctionalTest {
 
-    class TestNode(index: Int, isHealthy: Boolean, createdAt: Long) : Node(index, isHealthy, createdAt) {
+    class TestNode(index: Int, isHealthy: Boolean, createdAt: Long) : Node(
+        index = index,
+        isHealthy = isHealthy,
+        createdAt = createdAt,
+    ) {
         fun getCreatedTime(): Long = createdAt
         fun getBlockChain(): MutableList<Block> = chain
         fun getLastAddedBlockHash(): String = lastAddedIntoChainBlockHash
@@ -58,7 +63,7 @@ class NodeFunctionalTest {
     fun genesis_block_hash_same_for_all_nodes() {
         Assertions.assertEquals(
             healthyNode.getBlockChain()[0].currentHash,
-            unhealthyNode.getBlockChain()[0].currentHash
+            unhealthyNode.getBlockChain()[0].currentHash,
         )
     }
 
@@ -66,11 +71,11 @@ class NodeFunctionalTest {
     fun last_added_block_hash_same_as_genesis_block() {
         Assertions.assertEquals(
             healthyNode.getLastAddedBlockHash(),
-            healthyNode.getBlockChain()[0].currentHash
+            healthyNode.getBlockChain()[0].currentHash,
         )
         Assertions.assertEquals(
             unhealthyNode.getLastAddedBlockHash(),
-            unhealthyNode.getBlockChain()[0].currentHash
+            unhealthyNode.getBlockChain()[0].currentHash,
         )
     }
 
@@ -159,8 +164,8 @@ class NodeFunctionalTest {
 
     @Test
     fun is_chain_invalid_cause_previous_block() {
-        healthyBlock = Block(previousHash = "123", currentHash = "123")
-        unhealthyBlock = Block(previousHash = "123", currentHash = "123")
+        healthyBlock = Block(previousHash = "123", currentHash = "123", generatedBy = UUID.randomUUID())
+        unhealthyBlock = Block(previousHash = "123", currentHash = "123", generatedBy = UUID.randomUUID())
 
         healthyNode.addBlockToChain(healthyBlock)
         unhealthyNode.addBlockToChain(unhealthyBlock)
@@ -171,8 +176,8 @@ class NodeFunctionalTest {
 
     @Test
     fun is_chain_invalid_cause_current_hash_empty() {
-        healthyBlock = Block(previousHash = "123")
-        unhealthyBlock = Block(previousHash = "123")
+        healthyBlock = Block(previousHash = "123", generatedBy = UUID.randomUUID())
+        unhealthyBlock = Block(previousHash = "123", generatedBy = UUID.randomUUID())
 
         healthyNode.addBlockToChain(healthyBlock)
         unhealthyNode.addBlockToChain(unhealthyBlock)
@@ -204,8 +209,8 @@ class NodeFunctionalTest {
 
     @Test
     fun verify_block_wrong_not_change_anything() {
-        healthyBlock = Block(previousHash = "123")
-        unhealthyBlock = Block(previousHash = "123")
+        healthyBlock = Block(previousHash = "123", generatedBy = UUID.randomUUID())
+        unhealthyBlock = Block(previousHash = "123", generatedBy = UUID.randomUUID())
 
         val resultHealthy = healthyNode.verifyBlock(healthyBlock)
         val resultUnhealthy = healthyNode.verifyBlock(unhealthyBlock)

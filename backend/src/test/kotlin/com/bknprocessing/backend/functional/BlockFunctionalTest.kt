@@ -5,6 +5,7 @@ import com.bknprocessing.backend.models.Transaction
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.util.UUID
 
 class BlockFunctionalTest {
 
@@ -12,7 +13,7 @@ class BlockFunctionalTest {
 
     @BeforeEach
     fun setUp() {
-        block = Block(previousHash = "")
+        block = Block(previousHash = "", generatedBy = UUID.randomUUID())
     }
 
     @Test
