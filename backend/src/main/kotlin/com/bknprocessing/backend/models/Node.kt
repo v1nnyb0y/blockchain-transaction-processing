@@ -13,16 +13,15 @@ import java.lang.StringBuilder
 import kotlin.random.Random
 
 open class Node(
-    override val index: Int,
+    final override val index: Int,
     override val isHealthy: Boolean,
-    protected val createdAt: Long
+    protected val createdAt: Long,
 ) : INode {
 
-    protected val log: Logger by logger()
-    protected var ignoreLog: Boolean = true
+    private val log: Logger by logger()
+    private var ignoreLog: Boolean = true
 
     protected var amount = Random.nextInt(MIN_MONEY, MAX_MONEY)
-
     protected var chain: MutableList<Block> = mutableListOf()
     protected var lastAddedIntoChainBlockHash: String = ""
 
@@ -37,36 +36,32 @@ open class Node(
         }
 
         addBlockToChain(
-            mineBlock(
+            block = mineBlock(
                 Block(previousHash = StringBuilder(lastAddedIntoChainBlockHash).toString(), timestamp = createdAt)
-                    .calculateAndAssignHash()
-            )!!
+                    .calculateAndSetCurrentHash(),
+            )!!, // TODO FIX NPE (Cover Test)
         )
         ignoreLog = false
     }
 
-    override fun isMiner(): Boolean = amount > (MAX_MONEY / 20)
+    private fun Block.calculateHash() = "$previousHash$transactions$timestamp$nonce".hash()
 
-    /* Miner node actions */
-
-    protected fun Block.calculateHash() = "$previousHash$transactions$timestamp$nonce".hash()
-
-    protected fun Block.calculateAndAssignHash() = apply {
+    private fun Block.calculateAndSetCurrentHash() = apply {
         currentHash = calculateHash()
     }
 
-    protected fun Block.isMined() = currentHash.startsWith(validPrefix)
+    private fun Block.isMined() = currentHash.startsWith(validPrefix)
 
-    protected fun Block.nonceIncrement() = copy(nonce = nonce + 1)
+    private fun Block.nonceIncrement() = copy(nonce = nonce + 1)
 
     override fun constructBlock(tx: Transaction): Block {
         if (!ignoreLog) log.constructBlock(isHealthy, index)
         return Block(previousHash = StringBuilder(lastAddedIntoChainBlockHash).toString())
             .apply { addTransaction(tx) }
-            .calculateAndAssignHash()
+            .calculateAndSetCurrentHash()
     }
 
-    override fun mineBlock(block: Block): Block? {
+    final override fun mineBlock(block: Block): Block? {
         if (block.isMined()) {
             if (!ignoreLog) log.blockAlreadyMined(isHealthy, index, block.currentHash)
             return null
@@ -77,26 +72,28 @@ open class Node(
         while (!minedBlock.isMined()) {
             minedBlock = minedBlock
                 .nonceIncrement()
-                .calculateAndAssignHash()
+                .calculateAndSetCurrentHash()
         }
 
         if (!ignoreLog) log.endMining(isHealthy, index, block.currentHash)
         return minedBlock
     }
 
-    override fun removeBlockFromChain() {
-        // chain.removeLast()
-        // lastAddedIntoChainBlockHash = chain.last().currentHash
-    }
-
-    override fun addBlockToChain(block: Block) {
+    override fun verifyBlock(block: Block): Boolean {
+        if (!ignoreLog) log.startVerify(isHealthy, index, block.currentHash)
         chain.add(block)
+
+        if (!isChainValid()) {
+            if (!ignoreLog) log.endVerify(isHealthy, index, block.currentHash, false)
+            chain.removeLast()
+            return false
+        }
+
+        if (!ignoreLog) log.endVerify(isHealthy, index, block.currentHash, true)
         lastAddedIntoChainBlockHash = StringBuilder(block.currentHash).toString()
+        amount += 1
+        return true
     }
-
-    /* Miner node actions */
-
-    /* Verify node actions */
 
     protected fun isChainValid(): Boolean {
         when {
@@ -118,30 +115,28 @@ open class Node(
         }
     }
 
-    override fun verifyBlock(block: Block): Boolean {
-        if (!ignoreLog) log.startVerify(isHealthy, index, block.currentHash)
-        chain.add(block)
-
-        if (!isChainValid()) {
-            if (!ignoreLog) log.endVerify(isHealthy, index, block.currentHash, false)
-            chain.removeLast()
-            return false
-        }
-
-        if (!ignoreLog) log.endVerify(isHealthy, index, block.currentHash, true)
-        lastAddedIntoChainBlockHash = StringBuilder(block.currentHash).toString()
-        amount += 1
-        return true
-    }
+    override fun isMiner(): Boolean = amount > (MAX_MONEY / 20)
 
     /* Verify node actions */
 
-    companion object {
-        protected val MONEY_INT: Int = 4
-        protected val MAX_MONEY: Int = 10000
-        protected val MIN_MONEY: Int = 100
+    /* Miner node actions */
 
-        protected val difficulty = 2
+    final override fun addBlockToChain(block: Block) {
+        chain.add(block)
+        lastAddedIntoChainBlockHash = StringBuilder(block.currentHash).toString()
+    }
+
+    override fun removeBlockFromChain() {
+        // chain.removeLast()
+        // lastAddedIntoChainBlockHash = chain.last().currentHash
+    }
+
+    companion object {
+//        protected const val MONEY_INT: Int = 4
+        protected const val MAX_MONEY: Int = 10000
+        protected const val MIN_MONEY: Int = 100
+
+        protected const val difficulty = 2
         protected val validPrefix = "0".repeat(difficulty)
     }
 }
