@@ -26,19 +26,21 @@ open class Node(
     protected var lastAddedIntoChainBlockHash: String = ""
 
     init {
-        // Don't fix it. One miner and one verifier should be 100%
+        // One miner and one verifier should be 100%
         if (index == 0) amount = MAX_MONEY
         if (index == 1) amount = 0
 
-        // TODO Vitalii look on it
-        if (index != 0) {
+        // TODO Vitalii look on it ??
+        if (index > 0) {
             amount = 0
         }
 
         addBlockToChain(
             block = mineBlock(
-                Block(previousHash = StringBuilder(lastAddedIntoChainBlockHash).toString(), timestamp = createdAt)
-                    .calculateAndSetCurrentHash(),
+                Block(
+                    previousHash = StringBuilder(lastAddedIntoChainBlockHash).toString(),
+                    timestamp = createdAt,
+                ).calculateAndSetCurrentHash(),
             )!!, // TODO FIX NPE (Cover Test)
         )
         ignoreLog = false

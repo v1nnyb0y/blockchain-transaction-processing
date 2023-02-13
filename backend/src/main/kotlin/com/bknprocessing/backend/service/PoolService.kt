@@ -27,13 +27,13 @@ open class PoolService(
     val unhealthyNodesCount: Int,
     val validatorAlgorithm: ValidatorAlgorithm,
 ) {
-    /* Test data (for unit-testing) */
+    /* Test data (unit-testing) */
     protected var numberOfHandledTransactions: Int = 0
     protected var numberOfHandledVerification: Int = 0
     protected var numberOfHandledVerificationResult: Int = 0
     protected var numberOfSuccessVerifiedTransactions: Int = 0
     protected var numberOfResendVerificationResult: Int = 0
-    /* Test data (for unit-testing) */
+    /* Test data */
 
     private val log: Logger by logger()
 
@@ -63,10 +63,7 @@ open class PoolService(
         for (i in 0 until nodes.size) {
             launch { doMine(nodes[i]) }
             launch { doVerify(nodes[i]) }
-            log.startNode(
-                nodes[i].isHealthy,
-                nodes[i].index,
-            )
+            log.startNode(isNodeHealthy = nodes[i].isHealthy, index = nodes[i].index)
         }
 
         launch {
@@ -182,23 +179,4 @@ open class PoolService(
         private const val EPSILON = 0.0000000001
         private const val DELAY_MILSECS: Long = 100
     }
-
-    /*
-    suspend fun run(numberOfTransactions: Int) {
-        for (i in 0 until nodes.size) {
-            awaitSupervisor(
-                { doMine(nodes[i]) },
-                { doVerify(nodes[i]) },
-                { doSendTransactions(numberOfTransactions) }
-            )
-        }
-    }
-
-    private suspend fun awaitSupervisor(vararg units: suspend () -> Unit) =
-        supervisorScope {
-            units.forEach {
-                launch { it() }
-            }
-        }
-    */
 }
