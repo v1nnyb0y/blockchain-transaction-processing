@@ -1,5 +1,7 @@
-package com.bknprocessing.backend.models
+package com.bknprocessing.blockchain
 
+import com.bknprocessing.blockchain.data.Transaction
+import com.bknprocessing.blockchain.dto.Block
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
