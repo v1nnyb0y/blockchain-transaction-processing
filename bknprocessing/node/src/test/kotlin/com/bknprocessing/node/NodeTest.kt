@@ -2,6 +2,7 @@ package com.bknprocessing.node
 
 import com.bknprocessing.node.data.Transaction
 import com.bknprocessing.node.dto.Block
+import com.bknprocessing.node.nodeimpl.OldNode
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -10,7 +11,7 @@ import java.util.UUID
 
 class NodeTest {
 
-    class TestNode(index: Int, isHealthy: Boolean, createdAt: Long) : Node(
+    class TestNode(index: Int, isHealthy: Boolean, createdAt: Long) : OldNode(
         index = index,
         isHealthy = isHealthy,
         createdAt = createdAt,

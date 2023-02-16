@@ -1,19 +1,20 @@
 package com.bknprocessing.node.dto
 
-import com.bknprocessing.node.data.Transaction
 import java.time.Instant
 import java.util.UUID
 
-data class Block(
+data class Block<T>(
+    val previousHash: String,
+    val generatedBy: UUID?,
+
     var currentHash: String = "",
     val timestamp: Long = Instant.now().toEpochMilli(),
-    val previousHash: String,
+    val objs: MutableList<T> = mutableListOf(),
+
     var nonce: Long = 0,
-    val transactions: MutableList<Transaction> = mutableListOf(),
-    val generatedBy: UUID,
 ) {
 
-    fun addTransaction(tx: Transaction) {
-        transactions.add(tx)
+    fun addObj(tx: T) {
+        objs.add(tx)
     }
 }

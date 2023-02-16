@@ -1,9 +1,9 @@
 package com.bknprocessing.app.service
 
 import com.bknprocessing.app.type.ValidatorAlgorithm
-import com.bknprocessing.app.util.Predefined
-import com.bknprocessing.app.util.Predefined.Companion.FUNCTIONAL_NUMBER_OF_TRANSACTIONS
-import com.bknprocessing.app.util.Predefined.Companion.FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES
+import com.bknprocessing.app.utils.Predefined
+import com.bknprocessing.app.utils.Predefined.Companion.FUNCTIONAL_NUMBER_OF_TRANSACTIONS
+import com.bknprocessing.app.utils.Predefined.Companion.FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
@@ -15,7 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest
 class PoolServiceTest {
 
     class TestPoolService(nodesCount: Int, unhealthyNodesCount: Int, validatorAlgorithm: ValidatorAlgorithm) :
-        PoolService(nodesCount, unhealthyNodesCount) {
+        OldPoolService(nodesCount, unhealthyNodesCount) {
         fun getInstances() = nodes
         fun getNumberOfHandledTrans() = numberOfHandledTransactions
         fun getNumberOfHandledVerifies() = numberOfHandledVerification

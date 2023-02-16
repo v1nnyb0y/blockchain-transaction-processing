@@ -1,7 +1,6 @@
-package com.bknprocessing.app.util
+package com.bknprocessing.app.utils
 
-import com.bknprocessing.app.service.PoolService
-import com.bknprocessing.app.utils.determineNextIterationMinerIndex
+import com.bknprocessing.app.service.OldPoolService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -10,7 +9,7 @@ class MathematicsTest {
 
     @Test
     fun `should return minus one`() {
-        val nodesMap = emptyMap<Int, PoolService.VerifiedBlocksAndAmountInfo>()
+        val nodesMap = emptyMap<Int, OldPoolService.VerifiedBlocksAndAmountInfo>()
         assertThrows<IllegalStateException> {
             determineNextIterationMinerIndex(nodesMap = nodesMap)
         }
@@ -29,7 +28,7 @@ class MathematicsTest {
     //    @Test TODO Vitali
     fun `should return one`() {
         val expected = 0
-        val nodesMap = emptyMap<Int, PoolService.VerifiedBlocksAndAmountInfo>()
+        val nodesMap = emptyMap<Int, OldPoolService.VerifiedBlocksAndAmountInfo>()
         val actual = determineNextIterationMinerIndex(nodesMap = nodesMap)
         assertEquals(expected, actual)
     }

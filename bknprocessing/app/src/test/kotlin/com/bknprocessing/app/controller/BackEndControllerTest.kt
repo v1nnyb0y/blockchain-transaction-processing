@@ -1,7 +1,7 @@
 package com.bknprocessing.app.controller
 
 import com.bknprocessing.app.controllers.ExperimentDto
-import com.bknprocessing.app.util.Predefined
+import com.bknprocessing.app.utils.Predefined
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired

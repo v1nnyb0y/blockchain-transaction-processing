@@ -1,5 +1,7 @@
 package com.bknprocessing.app.service
 
+import com.bknprocessing.app.service.upper.LocalUpper
+import com.bknprocessing.app.service.worker.CoroutineWorker
 import com.bknprocessing.app.type.StateTransferApproach
 import com.bknprocessing.app.type.ValidatorAlgorithm
 import org.springframework.stereotype.Service
@@ -16,13 +18,8 @@ class BlockChainService {
     ) {
         when (stateTransferApproach) {
             StateTransferApproach.Coroutine -> {
-                with(
-                    PoolService(
-                        nodesCount = numberOfInstances,
-                        unhealthyNodesCount = numberOfUnhealthyNodes,
-                    ),
-                ) {
-                    this.run(numberOfTransactions)
+                with(PoolService(CoroutineWorker(), LocalUpper())) {
+                    this.run(numberOfInstances, numberOfUnhealthyNodes, numberOfTransactions)
                 }
             }
 

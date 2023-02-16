@@ -1,4 +1,4 @@
-package com.bknprocessing.app.util
+package com.bknprocessing.app.utils
 
 import com.bknprocessing.app.controllers.ExperimentDto
 import com.bknprocessing.app.type.StateTransferApproach

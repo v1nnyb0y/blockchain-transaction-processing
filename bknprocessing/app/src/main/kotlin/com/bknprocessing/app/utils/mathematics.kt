@@ -1,8 +1,8 @@
 package com.bknprocessing.app.utils // ktlint-disable filename
 
-import com.bknprocessing.app.service.PoolService
+import com.bknprocessing.app.service.OldPoolService
 
-fun determineNextIterationMinerIndex(nodesMap: Map<Int, PoolService.VerifiedBlocksAndAmountInfo>): Int {
+fun determineNextIterationMinerIndex(nodesMap: Map<Int, OldPoolService.VerifiedBlocksAndAmountInfo>): Int {
     if (nodesMap.size < 2) {
         throw IllegalStateException("Determine index process: Node size is incorrect")
     }
