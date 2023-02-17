@@ -2,37 +2,31 @@ package com.bknprocessing.backend.service
 
 import com.bknprocessing.backend.type.StateTransferApproach
 import com.bknprocessing.backend.type.ValidatorAlgorithm
-import kotlinx.coroutines.ObsoleteCoroutinesApi
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import org.springframework.stereotype.Service
 
 @Service
-class BlockChainService(
-    var nodesCount: Int = 3,
-    var numberOfTransactions: Int = 100,
-    var unhealthyNodesCount: Int = 0,
-    var validatorAlgorithm: ValidatorAlgorithm = ValidatorAlgorithm.ProofOfState,
-    var stateTransferApproach: StateTransferApproach = StateTransferApproach.Coroutine
-) {
+class BlockChainService {
 
-    @OptIn(ObsoleteCoroutinesApi::class)
-    suspend fun createPoolAndRun() {
+    suspend fun createPoolAndRun(
+        numberOfInstances: Int = 3,
+        numberOfTransactions: Int = 100,
+        numberOfUnhealthyNodes: Int = 0,
+        validatorAlgorithm: ValidatorAlgorithm = ValidatorAlgorithm.ProofOfState,
+        stateTransferApproach: StateTransferApproach = StateTransferApproach.Coroutine,
+    ) {
         when (stateTransferApproach) {
             StateTransferApproach.Coroutine -> {
                 with(
                     PoolService(
-                        txChannel = ConflatedBroadcastChannel(),
-                        blockChannel = Channel(),
-                        resultChannel = Channel(),
-                        nodesCount = nodesCount,
-                        unhealthyNodesCount = unhealthyNodesCount,
-                        validatorAlgorithm = validatorAlgorithm
-                    )
+                        nodesCount = numberOfInstances,
+                        unhealthyNodesCount = numberOfUnhealthyNodes,
+                        validatorAlgorithm = validatorAlgorithm,
+                    ),
                 ) {
                     this.run(numberOfTransactions)
                 }
             }
+
             else -> throw NotImplementedError()
         }
     }

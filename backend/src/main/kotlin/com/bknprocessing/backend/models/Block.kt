@@ -1,26 +1,18 @@
 package com.bknprocessing.backend.models
 
-import com.bknprocessing.backend.models.Transaction
-import com.bknprocessing.backend.utils.hash
 import java.time.Instant
+import java.util.UUID
 
-open class Block(
-    val previousHash: String,
-    val transactions: MutableList<Transaction> = mutableListOf(),
+data class Block(
+    var currentHash: String = "",
     val timestamp: Long = Instant.now().toEpochMilli(),
+    val previousHash: String,
     var nonce: Long = 0,
-    var hash: String = ""
+    val transactions: MutableList<Transaction> = mutableListOf(),
+    val generatedBy: UUID
 ) {
 
-    init {
-        hash = calculateHash()
-    }
-
-    open fun calculateHash(): String {
-        return "$previousHash$transactions$timestamp$nonce".hash()
-    }
-
-    fun addTransaction(trans: Transaction) {
-        transactions.add(trans)
+    fun addTransaction(tx: Transaction) {
+        transactions.add(tx)
     }
 }
