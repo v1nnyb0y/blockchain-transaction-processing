@@ -2,6 +2,7 @@ package com.bknprocessing.node.nodeimpl
 
 interface INode {
 
-    fun runVerifier()
-    fun runMiner()
+    suspend fun runVerifier()
+    suspend fun runMiner()
+    suspend fun waitStateChangeAction()
 }

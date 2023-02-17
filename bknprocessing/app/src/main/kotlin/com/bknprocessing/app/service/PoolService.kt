@@ -8,7 +8,7 @@ import kotlinx.coroutines.supervisorScope
 
 class PoolService(
     private val worker: IWorker<Transaction>,
-    private val upper: IUpper,
+    private val upper: IUpper<Transaction>,
 ) {
 
     protected data class UnitTestingData(

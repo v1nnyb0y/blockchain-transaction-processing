@@ -1,6 +1,8 @@
 package com.bknprocessing.node.dto
 
-data class VerificationDto(
-    val block: Block,
-    val nodeIndex: Int,
+import java.util.UUID
+
+data class VerificationDto<T>(
+    val nodeId: UUID,
+    val block: Block<T>,
 )

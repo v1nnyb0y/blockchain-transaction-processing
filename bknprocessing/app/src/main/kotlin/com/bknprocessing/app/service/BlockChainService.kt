@@ -1,6 +1,6 @@
 package com.bknprocessing.app.service
 
-import com.bknprocessing.app.service.upper.LocalUpper
+import com.bknprocessing.app.service.upper.localupper.CoroutineLocalUpper
 import com.bknprocessing.app.service.worker.CoroutineWorker
 import com.bknprocessing.app.type.StateTransferApproach
 import com.bknprocessing.app.type.ValidatorAlgorithm
@@ -18,7 +18,7 @@ class BlockChainService {
     ) {
         when (stateTransferApproach) {
             StateTransferApproach.Coroutine -> {
-                with(PoolService(CoroutineWorker(), LocalUpper())) {
+                with(PoolService(CoroutineWorker(), CoroutineLocalUpper())) {
                     this.run(numberOfInstances, numberOfUnhealthyNodes, numberOfTransactions)
                 }
             }

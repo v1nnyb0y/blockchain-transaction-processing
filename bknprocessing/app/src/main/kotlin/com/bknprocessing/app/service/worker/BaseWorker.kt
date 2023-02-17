@@ -5,10 +5,14 @@ import com.bknprocessing.common.IServer
 
 abstract class BaseWorker<T>(
     client: IClient,
-    server: IServer,
+    private val server: IServer,
 ) : IWorker<T> {
 
+    private enum class TopicsList {
+        ObjQueue,
+    }
+
     override fun verifyObject(obj: T) {
-        TODO("Not yet implemented")
+        server.sendObj(obj!!, TopicsList.ObjQueue.name)
     }
 }
