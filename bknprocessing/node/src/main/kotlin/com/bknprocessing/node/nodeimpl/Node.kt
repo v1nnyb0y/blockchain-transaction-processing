@@ -48,8 +48,7 @@ class Node<T>(
     protected val unitTestingData = UnitTestingData()
 
     protected var chain: MutableList<Block<T>> = mutableListOf()
-    protected val lastBlockHashInChain
-        get() = chain.last().currentHash
+    protected val lastBlockHashInChain get() = chain.last().currentHash
     protected var amount: Int = Random.nextInt(MIN_MONEY, MAX_MONEY)
 
     protected var isFinished: Boolean = false

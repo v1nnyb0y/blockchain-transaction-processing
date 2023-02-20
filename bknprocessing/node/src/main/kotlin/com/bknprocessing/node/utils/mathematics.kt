@@ -12,7 +12,7 @@ fun <T> determineNextIterationMinerIndex(
     var leaderValue = -1
     var leaderIndex: UUID? = null
 
-    nodesMap.entries.forEach {
+    nodesMap.entries.forEach {// 0 to -1
         if (leaderValue < it.value.amount / it.value.blocksCount) {
             leaderValue = it.value.amount
             leaderIndex = it.key

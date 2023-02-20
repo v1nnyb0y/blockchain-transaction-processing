@@ -10,8 +10,4 @@ interface INodeMiner<T> {
     fun mineBlock(block: Block<T>): Block<T>?
 
     fun constructBlock(obj: T, previousHash: String, nodeId: UUID): Block<T>
-
-    // todo use smart-contract for that operation
-    // fun addBlockToChain(block: Block<T>)
-    // fun removeBlockFromChain()
 }
