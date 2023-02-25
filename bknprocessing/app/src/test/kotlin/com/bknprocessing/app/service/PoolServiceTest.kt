@@ -1,142 +1,129 @@
 package com.bknprocessing.app.service
 
-import com.bknprocessing.app.type.ValidatorAlgorithm
-import com.bknprocessing.app.utils.Predefined
+import com.bknprocessing.app.data.Transaction
+import com.bknprocessing.app.service.worker.IWorker
+import com.bknprocessing.app.service.worker.KafkaWorker
+import com.bknprocessing.app.service.wrapper.TestedPoolService
+import com.bknprocessing.app.service.wrapper.uppper.ITestedUpper
+import com.bknprocessing.app.service.wrapper.uppper.TestedKafkaUpper
+import com.bknprocessing.app.utils.Predefined.Companion.FUNCTIONAL_NUMBER_OF_INSTANCES
 import com.bknprocessing.app.utils.Predefined.Companion.FUNCTIONAL_NUMBER_OF_TRANSACTIONS
 import com.bknprocessing.app.utils.Predefined.Companion.FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES
-import kotlinx.coroutines.delay
+import com.bknprocessing.node.nodeimpl.Node
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.context.SpringBootTest
 
-@SpringBootTest
-class PoolServiceTest {
+/*abstract*/ class PoolServiceTest {
 
-    class TestPoolService(nodesCount: Int, unhealthyNodesCount: Int, validatorAlgorithm: ValidatorAlgorithm) :
-        OldPoolService(nodesCount, unhealthyNodesCount) {
-        fun getInstances() = nodes
-        fun getNumberOfHandledTrans() = numberOfHandledTransactions
-        fun getNumberOfHandledVerifies() = numberOfHandledVerification
-        fun getNumberOfHandledVerifiesResult() = numberOfHandledVerificationResult
-        fun getNumberOfSuccessVerifications() = numberOfSuccessVerifiedTransactions
-    }
+    companion object {
+        private lateinit var poolService: TestedPoolService
+        private lateinit var upper: ITestedUpper<Transaction>
+        private lateinit var worker: IWorker<Transaction>
 
-    private lateinit var posPoolService: TestPoolService
+        @JvmStatic
+        @BeforeAll
+        fun setUp(): Unit = runBlocking {
+            upper = TestedKafkaUpper()
+            worker = KafkaWorker() // TODO Vitalii please look
+            // I want to share that constructors from super class (for example: CoroutinePoolService)
+            // and this class should be abstract
 
-    @BeforeEach
-    fun setup() {
-        posPoolService = TestPoolService(
-            Predefined.FUNCTIONAL_NUMBER_OF_INSTANCES,
-            FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES,
-            ValidatorAlgorithm.ProofOfState,
-        )
-    }
-
-    @Test
-    fun created_correct_number_of_nodes() {
-        var numberOfHealthy = 0
-        var numberOfUnhealthy = 0
-        for (node in posPoolService.getInstances()) {
-            if (node.isHealthy) {
-                numberOfHealthy += 1
-            } else {
-                numberOfUnhealthy += 1
+            poolService = TestedPoolService(worker, upper).apply {
+                this.run(
+                    FUNCTIONAL_NUMBER_OF_INSTANCES,
+                    FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES,
+                    FUNCTIONAL_NUMBER_OF_TRANSACTIONS,
+                )
             }
         }
-
-        Assertions.assertEquals(
-            numberOfHealthy,
-            Predefined.FUNCTIONAL_NUMBER_OF_INSTANCES - FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES,
-        )
-        Assertions.assertEquals(numberOfUnhealthy, FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES)
     }
 
     @Test
-    fun all_trans_are_handled() = runBlocking {
-        posPoolService.run(FUNCTIONAL_NUMBER_OF_TRANSACTIONS)
-        while (!posPoolService.isFinished) {
-            delay(100)
-        }
+    fun `created correct number of nodes`() {
+        Assertions.assertEquals(FUNCTIONAL_NUMBER_OF_INSTANCES, upper.getListNodes().size)
+    }
 
-        delay(500)
+    @Test
+    fun `create correct number of healthy and unhealthy nodes`() {
+        val countOfHealthy = upper.getListNodes().count { it.isHealthy }
+        val countOfUnhealthy = upper.getListNodes().count { !it.isHealthy }
+
+        Assertions.assertEquals(FUNCTIONAL_NUMBER_OF_INSTANCES - FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES, countOfHealthy)
+        Assertions.assertEquals(FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES, countOfUnhealthy)
+    }
+
+    @Test
+    fun `all nodes has unique id`() {
+        val countOfUnique = upper.getListNodes().distinctBy { it.id }.count()
+        Assertions.assertEquals(FUNCTIONAL_NUMBER_OF_INSTANCES, countOfUnique)
+    }
+
+    @Test
+    fun `all nodes has unique index`() {
+        val countOfUnique = upper.getListNodes().distinctBy { it.index }.count()
+        Assertions.assertEquals(FUNCTIONAL_NUMBER_OF_INSTANCES, countOfUnique)
+    }
+
+    @Test
+    fun `at least one miner and one verifier`() {
+        val countOfMiners = upper.getListNodes().count { it.isMiner }
+        val countOfVerifiers = upper.getListNodes().count { !it.isMiner }
+
+        Assertions.assertTrue(countOfMiners > 0)
+        Assertions.assertTrue(countOfVerifiers > 0)
+    }
+
+    @Test
+    fun `count of sent trans_correctness`() {
         Assertions.assertEquals(
             FUNCTIONAL_NUMBER_OF_TRANSACTIONS,
-            posPoolService.getNumberOfHandledTrans(),
+            poolService.getPoolServiceUnitData().numberOfSentTransactions,
         )
     }
 
     @Test
-    fun all_blocks_verification_are_handled_in_network() = runBlocking {
-        posPoolService.run(FUNCTIONAL_NUMBER_OF_TRANSACTIONS)
-        while (!posPoolService.isFinished) {
-            delay(100)
-        }
-
-        delay(500)
+    fun `count of received trans_correctness`() {
         Assertions.assertEquals(
-            FUNCTIONAL_NUMBER_OF_TRANSACTIONS * (Predefined.FUNCTIONAL_NUMBER_OF_INSTANCES - 1),
-            posPoolService.getNumberOfHandledVerifies(),
+            FUNCTIONAL_NUMBER_OF_INSTANCES,
+            Node.unitTestingData.numberOfHandledObjs,
         )
     }
 
     @Test
-    fun all_blocks_verification_result_are_handled_in_network() = runBlocking {
-        posPoolService.run(FUNCTIONAL_NUMBER_OF_TRANSACTIONS)
-        while (!posPoolService.isFinished) {
-            delay(100)
-        }
-
-        delay(500)
+    fun `count of received blocks for verify_correctness`() {
         Assertions.assertEquals(
-            Predefined.FUNCTIONAL_NUMBER_OF_INSTANCES * (Predefined.FUNCTIONAL_NUMBER_OF_INSTANCES - 1),
-            posPoolService.getNumberOfHandledVerifiesResult(),
-        )
-    }
-
-    @Test // should be failed, cause isHealthy functionality is not implemented
-    fun number_of_failed_verifications_should_less_or_equal_than_unhealthy_nodes() = runBlocking {
-        posPoolService.run(FUNCTIONAL_NUMBER_OF_TRANSACTIONS)
-        while (!posPoolService.isFinished) {
-            delay(100)
-        }
-
-        delay(500)
-        Assertions.assertTrue(
-            FUNCTIONAL_NUMBER_OF_TRANSACTIONS - posPoolService.getNumberOfSuccessVerifications() <= FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES,
+            FUNCTIONAL_NUMBER_OF_TRANSACTIONS * FUNCTIONAL_NUMBER_OF_INSTANCES,
+            Node.unitTestingData.numberOfHandledVerificationBlocks,
         )
     }
 
     @Test
-    fun all_nodes_has_unique_index() {
-        val indexes: MutableMap<Int, Boolean> = HashMap()
-        var result = true
-        for (node in posPoolService.getInstances()) {
-            if (indexes.containsKey(node.index)) {
-                result = false
-                break
-            }
-
-            indexes[node.index] = true
-        }
-
-        Assertions.assertTrue(result)
+    fun `count of received verification results_correctness`() {
+        Assertions.assertEquals(
+            FUNCTIONAL_NUMBER_OF_TRANSACTIONS * (FUNCTIONAL_NUMBER_OF_INSTANCES - 1),
+            Node.unitTestingData.numberOfHandledVerificationResult,
+        )
     }
 
     @Test
-    fun at_least_one_miner_and_one_verifier() {
-        var oneMiner = false
-        var oneVerifier = false
+    fun `count of success verifications_correctness`() {
+        Assertions.assertEquals(
+            FUNCTIONAL_NUMBER_OF_TRANSACTIONS,
+            Node.unitTestingData.numberOfSuccessVerifiedObjs,
+        )
+    }
 
-        for (node in posPoolService.getInstances()) {
-            oneMiner = oneMiner || node.isMiner()
-            oneVerifier = oneVerifier || !node.isMiner()
-
-            if (oneMiner && oneVerifier) break
-        }
-
-        Assertions.assertTrue(oneMiner)
-        Assertions.assertTrue(oneVerifier)
+    @Test
+    fun `all casts are correct`() {
+        Assertions.assertEquals(
+            FUNCTIONAL_NUMBER_OF_TRANSACTIONS,
+            Node.unitTestingData.numberOfCastedObjs,
+        )
+        Assertions.assertEquals(
+            FUNCTIONAL_NUMBER_OF_TRANSACTIONS * FUNCTIONAL_NUMBER_OF_INSTANCES,
+            Node.unitTestingData.numberOfCastedVerificationBlocks,
+        )
     }
 }

@@ -9,5 +9,5 @@ interface INodeMiner<T> {
 
     fun mineBlock(block: Block<T>): Block<T>?
 
-    fun constructBlock(obj: T, previousHash: String, nodeId: UUID): Block<T>
+    fun constructBlock(obj: T, previousHash: String, nodeId: UUID, nodeIndex: Int, amount: Int): Block<T>
 }

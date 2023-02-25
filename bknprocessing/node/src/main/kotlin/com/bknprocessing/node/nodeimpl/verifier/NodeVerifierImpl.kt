@@ -2,7 +2,7 @@ package com.bknprocessing.node.nodeimpl.verifier
 
 import com.bknprocessing.node.dto.Block
 
-class NodeVerifierImpl<T>(
+open class NodeVerifierImpl<T>(
     val calculateHash: (Block<T>) -> String,
     val isMined: (Block<T>) -> Boolean,
 ) : INodeVerifier<T> {

@@ -1,18 +1,19 @@
 package com.bknprocessing.node.nodeimpl.miner
 
 import com.bknprocessing.node.dto.Block
+import com.bknprocessing.node.dto.NodeInfoSubBlock
 import com.bknprocessing.node.nodeimpl.Node
 import java.util.UUID
 
-class NodeMinerImpl<T>(
+open class NodeMinerImpl<T>(
     val calculateHash: (Block<T>) -> String,
     val isMined: (Block<T>) -> Boolean,
 ) : INodeMiner<T> {
 
-    private fun Block<T>.calculateAndSetCurrentHash() = apply {
+    protected fun Block<T>.calculateAndSetCurrentHash() = apply {
         currentHash = calculateHash(this)
     }
-    private fun Block<T>.nonceIncrement() = copy(nonce = nonce + 1)
+    protected fun Block<T>.nonceIncrement() = copy(nonce = nonce + 1)
 
     override fun isMiner(amount: Int): Boolean = amount > (Node.MAX_MONEY / 20)
 
@@ -29,10 +30,10 @@ class NodeMinerImpl<T>(
         return minedBlock
     }
 
-    override fun constructBlock(obj: T, previousHash: String, nodeId: UUID): Block<T> {
+    override fun constructBlock(obj: T, previousHash: String, nodeId: UUID, nodeIndex: Int, amount: Int): Block<T> {
         return Block<T>(
             previousHash = previousHash,
-            generatedBy = nodeId,
+            nodeInfo = NodeInfoSubBlock(amount = amount, index = nodeIndex, id = nodeId),
         )
             .apply { addObj(obj) }
             .calculateAndSetCurrentHash()

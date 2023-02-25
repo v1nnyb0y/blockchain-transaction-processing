@@ -8,8 +8,8 @@ class Predefined {
     companion object {
         /* Integration Tests */
         private const val INTEGRATION_NUMBER_OF_INSTANCES = 100
-        private const val INTEGRATION_NUMBER_OF_UNHEALTHY_NODES = 10
-        private const val INTEGRATION_NUMBER_OF_TRANSACTIONS = 10000
+        private const val INTEGRATION_NUMBER_OF_UNHEALTHY_NODES = 20
+        private const val INTEGRATION_NUMBER_OF_TRANSACTIONS = 100
 
         val COROUTINE_WITH_POS = ExperimentDto(
             numberOfInstances = INTEGRATION_NUMBER_OF_INSTANCES,

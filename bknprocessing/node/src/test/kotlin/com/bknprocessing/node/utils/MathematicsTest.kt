@@ -1,15 +1,16 @@
-package com.bknprocessing.app.utils
+package com.bknprocessing.node.utils
 
-import com.bknprocessing.app.service.OldPoolService
-import org.junit.jupiter.api.Assertions.assertEquals
+import com.bknprocessing.node.nodeimpl.Node
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.UUID
 
 class MathematicsTest {
 
     @Test
     fun `should return minus one`() {
-        val nodesMap = emptyMap<Int, OldPoolService.VerifiedBlocksAndAmountInfo>()
+        val nodesMap = emptyMap<UUID, Node<Any>.VerifiedBlocksAndAmountInfo>()
         assertThrows<IllegalStateException> {
             determineNextIterationMinerIndex(nodesMap = nodesMap)
         }
@@ -21,15 +22,15 @@ class MathematicsTest {
 //        val nodesMap = mapOf<Int, PoolService.VerifiedBlocksAndAmountInfo>{
 //            0 to PoolService.VerifiedBlocksAndAmountInfo
 //        }
-        val actual = determineNextIterationMinerIndex(nodesMap = emptyMap())
-        assertEquals(expected, actual)
+        val actual = determineNextIterationMinerIndex<Any>(nodesMap = emptyMap())
+        Assertions.assertEquals(expected, actual)
     }
 
-    //    @Test TODO Vitali
+    //    @Test TODO Vitalis
     fun `should return one`() {
         val expected = 0
-        val nodesMap = emptyMap<Int, OldPoolService.VerifiedBlocksAndAmountInfo>()
+        val nodesMap = emptyMap<UUID, Node<Any>.VerifiedBlocksAndAmountInfo>()
         val actual = determineNextIterationMinerIndex(nodesMap = nodesMap)
-        assertEquals(expected, actual)
+        Assertions.assertEquals(expected, actual)
     }
 }

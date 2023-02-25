@@ -5,5 +5,5 @@ import com.bknprocessing.common.kafka.KafkaProducer
 
 class KafkaWorker<T>(
     consumer: KafkaConsumer = KafkaConsumer(),
-    producer: KafkaProducer = KafkaProducer(),
+    producer: KafkaProducer = KafkaProducer.INSTANCE,
 ) : BaseWorker<T>(consumer, producer)

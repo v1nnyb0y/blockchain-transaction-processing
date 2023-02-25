@@ -3,9 +3,15 @@ package com.bknprocessing.node.dto
 import java.time.Instant
 import java.util.UUID
 
+data class NodeInfoSubBlock(
+    val amount: Int,
+    val index: Int,
+    val id: UUID,
+)
+
 data class Block<T>(
     val previousHash: String,
-    val generatedBy: UUID?,
+    val nodeInfo: NodeInfoSubBlock?,
 
     var currentHash: String = "",
     val timestamp: Long = Instant.now().toEpochMilli(),

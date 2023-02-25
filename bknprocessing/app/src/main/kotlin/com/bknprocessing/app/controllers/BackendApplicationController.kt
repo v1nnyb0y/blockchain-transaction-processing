@@ -22,7 +22,7 @@ class BackendApplicationController(
     }
 
     @PostMapping("/asyncExperiment")
-    suspend fun startExperiment(@RequestBody configuration: ExperimentDto) {
+    fun startExperiment(@RequestBody configuration: ExperimentDto) {
         log.info("Start POST query for START_EXPERIMENT with data: $configuration")
         blockChainService.createPoolAndRun(
             numberOfInstances = configuration.numberOfInstances,

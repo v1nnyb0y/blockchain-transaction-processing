@@ -27,8 +27,8 @@ class BackEndControllerTest {
             content = mapper.writeValueAsString(input)
             accept = MediaType.APPLICATION_JSON
         }
-            .asyncDispatch()
-            .andExpect { request { asyncStarted() } }
+            // .asyncDispatch()
+            // .andExpect { request { asyncStarted() } }
             .andExpect { status { isOk() } }
     }
 

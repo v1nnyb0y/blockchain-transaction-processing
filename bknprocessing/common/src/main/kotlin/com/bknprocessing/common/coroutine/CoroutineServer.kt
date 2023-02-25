@@ -1,21 +1,23 @@
 package com.bknprocessing.common.coroutine
 
-import com.bknprocessing.common.CoroutineServerConfiguration
 import com.bknprocessing.common.IServer
-import com.bknprocessing.common.ServerConfiguration
+import com.bknprocessing.common.globals.ServerConfiguration
+import com.bknprocessing.common.globals.TopicsList
 import kotlinx.coroutines.ObsoleteCoroutinesApi
-import kotlinx.coroutines.channels.BroadcastChannel
 
 class CoroutineServer private constructor() : IServer {
 
-    @OptIn(ObsoleteCoroutinesApi::class)
-    override fun setup(configuration: ServerConfiguration) {
-        val castedConfiguration = configuration as? CoroutineServerConfiguration ?: throw IllegalStateException("Wrong client configuration")
-        CoroutineTransferStorage.blockVerificationChannel = BroadcastChannel(capacity = castedConfiguration.capacity * castedConfiguration.capacity)
-    }
+    override fun setup(configuration: ServerConfiguration) { }
 
+    @OptIn(ObsoleteCoroutinesApi::class)
     override fun sendObj(obj: Any, to: String): Boolean {
-        TODO("Not yet implemented")
+        return when (to) {
+            TopicsList.ObjQueue.name -> CoroutineTransferStorage.objChannel.trySend(obj).isSuccess
+            TopicsList.VerificationBlockQueue.name -> CoroutineTransferStorage.blockVerificationChannel.trySend(obj).isSuccess
+            TopicsList.VerificationResultBlockQueue.name -> CoroutineTransferStorage.blockVerificationResultChannel.trySend(obj).isSuccess
+            TopicsList.StateChange.name -> CoroutineTransferStorage.smartContractChannel.trySend(obj).isSuccess
+            else -> false
+        }
     }
 
     companion object {

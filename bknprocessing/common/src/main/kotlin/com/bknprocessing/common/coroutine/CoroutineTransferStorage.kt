@@ -12,5 +12,6 @@ class CoroutineTransferStorage private constructor() {
         val objChannel = Channel<Any>(capacity = 1)
         var blockVerificationChannel = BroadcastChannel<Any>(capacity = 1)
         val blockVerificationResultChannel = Channel<Any>(capacity = UNLIMITED)
+        var smartContractChannel = BroadcastChannel<Any>(capacity = 1)
     }
 }

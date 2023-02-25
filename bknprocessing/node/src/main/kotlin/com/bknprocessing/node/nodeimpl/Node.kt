@@ -3,6 +3,7 @@ package com.bknprocessing.node.nodeimpl
 import com.bknprocessing.common.IClient
 import com.bknprocessing.common.IServer
 import com.bknprocessing.node.dto.Block
+import com.bknprocessing.node.dto.NodeInfo
 import com.bknprocessing.node.dto.StateAction
 import com.bknprocessing.node.dto.StateChangeDto
 import com.bknprocessing.node.dto.VerificationDto
@@ -11,14 +12,33 @@ import com.bknprocessing.node.nodeimpl.miner.INodeMiner
 import com.bknprocessing.node.nodeimpl.miner.NodeMinerImpl
 import com.bknprocessing.node.nodeimpl.verifier.INodeVerifier
 import com.bknprocessing.node.nodeimpl.verifier.NodeVerifierImpl
+import com.bknprocessing.node.utils.constructedBlock
 import com.bknprocessing.node.utils.determineNextIterationMinerIndex
+import com.bknprocessing.node.utils.endVerify
+import com.bknprocessing.node.utils.finishMiner
+import com.bknprocessing.node.utils.finishSmartContractListener
+import com.bknprocessing.node.utils.finishVerifier
 import com.bknprocessing.node.utils.hash
+import com.bknprocessing.node.utils.logger
+import com.bknprocessing.node.utils.minedBlock
+import com.bknprocessing.node.utils.setNewMiner
+import com.bknprocessing.node.utils.startMiner
+import com.bknprocessing.node.utils.startNetworkVerify
+import com.bknprocessing.node.utils.startSmAcceptNewBlock
+import com.bknprocessing.node.utils.startSmActualizeChain
+import com.bknprocessing.node.utils.startSmFinishProcess
+import com.bknprocessing.node.utils.startSmartContractListener
+import com.bknprocessing.node.utils.startVerifier
+import com.bknprocessing.node.utils.startVerify
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import org.slf4j.Logger
 import java.util.UUID
 import kotlin.random.Random
 
 @Suppress("UNCHECKED_CAST")
-class Node<T>(
+open class Node<T>(
     val id: UUID = UUID.randomUUID(),
 
     val index: Int,
@@ -30,38 +50,32 @@ class Node<T>(
     val server: IServer,
 ) : INode {
 
-    private enum class TopicsList {
+    val log: Logger by logger()
+    protected enum class TopicsList {
         ObjQueue, VerificationBlockQueue, VerificationResultBlockQueue,
         StateChange,
     }
 
-    protected data class UnitTestingData(
-        var numberOfHandledObjs: Int = 0,
-        var numberOfCastedObjs: Int = 0,
-
-        var numberOfHandledVerificationBlocks: Int = 0,
-        var numberOfCastedVerificationBlocks: Int = 0,
-
-        var numberOfHandledVerificationResult: Int = 0,
-        var numberOfSuccessVerifiedObjs: Int = 0,
-    )
-    protected val unitTestingData = UnitTestingData()
-
+    protected var nodeInfos: MutableMap<UUID, Int> = mutableMapOf()
     protected var chain: MutableList<Block<T>> = mutableListOf()
     protected val lastBlockHashInChain get() = chain.last().currentHash
     protected var amount: Int = Random.nextInt(MIN_MONEY, MAX_MONEY)
 
-    protected var isFinished: Boolean = false
-    protected var stopOnStateChanging: Boolean = false
+    private var isFinished: Boolean = false
+    private var stopOnStateChanging: Boolean = false
 
-    private val calculateHash = { block: Block<T> -> with(block) { "$previousHash$objs$timestamp$nonce".hash() } }
-    private val isMined = { block: Block<T> -> with(block) { currentHash.startsWith(validPrefix) } }
+    protected val calculateHash = { block: Block<T> -> with(block) { "$previousHash$objs$timestamp$nonce".hash() } }
+    protected val isMined = { block: Block<T> -> with(block) { currentHash.startsWith(validPrefix) } }
+    var isMiner = false
 
     protected val miner: INodeMiner<T> = NodeMinerImpl(calculateHash, isMined)
-    protected val verifier: INodeVerifier<T> = NodeVerifierImpl(calculateHash, isMined)
+    private val verifier: INodeVerifier<T> = NodeVerifierImpl(calculateHash, isMined)
 
     init {
-        if (index == 0) amount = MAX_MONEY
+        if (index == 0) {
+            amount = MAX_MONEY
+            isMiner = true
+        }
         if (index > 0) amount = 0
 
         // generate genesis block
@@ -69,31 +83,46 @@ class Node<T>(
             Block(
                 previousHash = "",
                 timestamp = createdAt,
-                generatedBy = null,
+                nodeInfo = null,
             ),
         )!!
         chain.add(block)
+        nodeInfos[id] = amount
     }
 
-    override suspend fun waitStateChangeAction() {
+    override suspend fun waitStateChangeAction() = supervisorScope {
+        log.startSmartContractListener(isHealthy, index)
         while (!isFinished) {
             delay(DELAY_MILSEC)
-            val stateChangeDto = client.getObj(TopicsList.StateChange.name) ?: continue
-            val castedStateChangeDto = (stateChangeDto as? StateChangeDto<T>) ?: throw IllegalStateException("Wrong DTO in state change queue")
+            val stateChangeDto = client.getObj(TopicsList.StateChange.name, index) ?: continue
+            var castedStateChangeDto = (stateChangeDto as? StateChangeDto)
+            if (castedStateChangeDto == null) {
+                // for finish process only (can be removed for real project)
+                val transCount = (stateChangeDto as? Int) ?: throw IllegalStateException("Wrong DTO in state change queue")
+                castedStateChangeDto = StateChangeDto(data = transCount, action = StateAction.FINISH)
+            }
 
             stopOnStateChanging = true
             when (castedStateChangeDto.action) {
-                StateAction.ACCEPT_NEW_BLOCK -> acceptNewBlock(castedStateChangeDto.block!!)
-                StateAction.ACTUALIZE -> removeUnhealthyBlocks(castedStateChangeDto.block!!)
+                StateAction.ACCEPT_NEW_BLOCK -> handleAcceptNewBlock(castedStateChangeDto.data as Block<T>)
+                StateAction.ACTUALIZE -> handleRemoveUnhealthyBlocks(castedStateChangeDto.data as Block<T>)
+                StateAction.FINISH -> {
+                    stopOnStateChanging = false
+                    launch { handleFinishNodeExperiment(castedStateChangeDto.data as Int) }
+                }
+                StateAction.SET_NEW_MINER -> handleSetNewMiner(castedStateChangeDto.data as UUID)
             }
             stopOnStateChanging = false
         }
+        log.finishSmartContractListener(isHealthy, index)
     }
 
     override suspend fun runMiner() {
-        if (miner.isMiner(amount)) {
-            while (!isFinished) {
-                delay(DELAY_MILSEC)
+        log.startMiner(isHealthy, index)
+        while (!isFinished) {
+            delay(DELAY_MILSEC)
+            // TODO support multi miner
+            if (/*miner.isMiner(amount) || */isMiner) {
                 val obj = client.getObj(TopicsList.ObjQueue.name) ?: continue
                 unitTestingData.numberOfHandledObjs += 1
 
@@ -101,8 +130,16 @@ class Node<T>(
                 unitTestingData.numberOfCastedObjs += 1
 
                 while (stopOnStateChanging) delay(DELAY_MILSEC)
-                val constructedBlock: Block<T> = miner.constructBlock(castedObj, lastBlockHashInChain, id)
+                val constructedBlock: Block<T> = miner.constructBlock(
+                    castedObj,
+                    lastBlockHashInChain,
+                    id,
+                    index,
+                    amount + 1,
+                )
+                log.constructedBlock(isHealthy, index)
                 val minedBlock: Block<T> = miner.mineBlock(constructedBlock) ?: continue
+                log.minedBlock(isHealthy, index, minedBlock.currentHash)
 
                 server.sendObj(
                     VerificationDto(
@@ -115,11 +152,12 @@ class Node<T>(
                 var countOfFinishedNodes = 0
                 var countOfSuccessNodes = 0
 
+                log.startNetworkVerify(isHealthy, index)
                 while (countOfFinishedNodes != networkSize - 1) {
                     // TODO add checking on 80% of the success nodes
                     delay(DELAY_MILSEC)
 
-                    val verificationResult = client.getObj(TopicsList.VerificationBlockQueue.name) ?: continue
+                    val verificationResult = client.getObj(TopicsList.VerificationResultBlockQueue.name) ?: continue
                     val castedVerificationResult = (verificationResult as? VerificationResultDto) ?: throw IllegalStateException("Wrong DTO in verification result queue")
 
                     if (castedVerificationResult.blockHash == minedBlock.currentHash) {
@@ -129,6 +167,8 @@ class Node<T>(
                         if (castedVerificationResult.verificationResult) {
                             countOfSuccessNodes += 1
                         }
+
+                        nodeInfos[castedVerificationResult.nodeInfo.id] = castedVerificationResult.nodeInfo.amount
                     } else {
                         server.sendObj(
                             castedVerificationResult,
@@ -137,68 +177,124 @@ class Node<T>(
                     }
                 }
 
+                amount += 1
+                nodeInfos[id] = amount
                 if (countOfSuccessNodes / (networkSize - 1) - 0.8 >= EPSILON) {
                     unitTestingData.numberOfSuccessVerifiedObjs += 1
                     chain.add(minedBlock)
                     distributeBlockToNetwork(minedBlock)
 
-                    val indexesToCountVerifiedBlocks: Map<UUID, VerifiedBlocksAndAmountInfo> =
-                        chain
-                            .groupBy { it.generatedBy }
-                            .map { it.key!! to VerifiedBlocksAndAmountInfo(it.value.count().toLong(), 12) } // TODO fix money
-                            .toMap()
-                    val nextIterationMinerIndex = determineNextIterationMinerIndex(indexesToCountVerifiedBlocks) // TODO use next miner
+                    val nextIterationMinerIndex = determineNextIterationMinerIndex(findMapOfNodes())
+                    setNewMiner(nextIterationMinerIndex)
+                    log.endVerify(isHealthy, index, minedBlock.currentHash, true)
                 } else {
                     actualizeNetworkDueWrongVerification(chain.last())
+                    log.endVerify(isHealthy, index, minedBlock.currentHash, false)
                 }
             }
         }
+        log.finishMiner(isHealthy, index)
     }
 
     override suspend fun runVerifier() {
+        log.startVerifier(isHealthy, index)
         while (!isFinished) {
             delay(DELAY_MILSEC)
-            val verificationDto = client.getObj(TopicsList.VerificationBlockQueue.name) ?: continue
+            val verificationDto = client.getObj(TopicsList.VerificationBlockQueue.name, index) ?: continue
             unitTestingData.numberOfHandledVerificationBlocks += 1
 
             val castedVerificationDto = (verificationDto as? VerificationDto<T>) ?: throw IllegalStateException("Wrong DTO in verification queue")
             unitTestingData.numberOfCastedVerificationBlocks += 1
 
+            if (castedVerificationDto.nodeId == id) continue
+
             while (stopOnStateChanging) delay(DELAY_MILSEC)
+            amount += 1
+            log.startVerify(isHealthy, index, castedVerificationDto.block.currentHash)
             server.sendObj(
                 VerificationResultDto(
                     blockHash = castedVerificationDto.block.currentHash,
                     nodeId = verificationDto.nodeId,
                     verificationResult = verifier.verifyBlock(castedVerificationDto.block, chain),
+                    nodeInfo = NodeInfo(id = id, amount = amount),
                 ),
                 TopicsList.VerificationResultBlockQueue.name,
             )
         }
+        log.finishVerifier(isHealthy, index)
     }
 
-    private fun acceptNewBlock(newBLock: Block<T>) {
-        // TODO
+    protected fun findMapOfNodes(): Map<UUID, VerifiedBlocksAndAmountInfo> {
+        val map: MutableMap<UUID, VerifiedBlocksAndAmountInfo> = chain
+            .filter { it.nodeInfo != null }
+            .groupBy { it.nodeInfo!!.id }
+            .map {
+                it.key to VerifiedBlocksAndAmountInfo(
+                    it.value.count().toLong(),
+                    it.value.maxBy { it.timestamp }.nodeInfo!!.amount,
+                )
+            }
+            .toMap()
+            .toMutableMap()
+
+        nodeInfos.entries.forEach {
+            map.putIfAbsent(it.key, VerifiedBlocksAndAmountInfo(0, it.value))
+        }
+
+        return map
     }
 
-    private fun removeUnhealthyBlocks(lastSuccessBlock: Block<T>) {
-        // TODO
+    protected fun handleAcceptNewBlock(newBlock: Block<T>) {
+        log.startSmAcceptNewBlock(isHealthy, index)
+        if (newBlock.currentHash == lastBlockHashInChain) return
+        chain.add(newBlock)
+    }
+    protected fun handleRemoveUnhealthyBlocks(lastSuccessBlock: Block<T>) {
+        log.startSmActualizeChain(isHealthy, index)
+        while (lastSuccessBlock.currentHash != lastBlockHashInChain) {
+            chain.removeLast()
+        }
+    }
+    protected fun handleSetNewMiner(minerId: UUID) {
+        isMiner = minerId == id
+        if (isMiner) {
+            log.setNewMiner(isHealthy, index)
+        }
+    }
+    private suspend fun handleFinishNodeExperiment(transCount: Int) {
+        log.startSmFinishProcess(isHealthy, index)
+        while (chain.size != transCount + 1) { // + 1 cause of generic block
+            delay(DELAY_MILSEC)
+        }
+        isFinished = true
     }
 
     private fun distributeBlockToNetwork(newBlock: Block<T>) {
         server.sendObj(
             StateChangeDto(
-                block = newBlock,
+                data = newBlock,
                 action = StateAction.ACCEPT_NEW_BLOCK,
             ),
             TopicsList.StateChange.name,
         )
     }
-
     private fun actualizeNetworkDueWrongVerification(lastSuccessBlock: Block<T>) {
         server.sendObj(
             StateChangeDto(
-                block = lastSuccessBlock,
+                data = lastSuccessBlock,
                 action = StateAction.ACTUALIZE,
+            ),
+            TopicsList.StateChange.name,
+        )
+    }
+    private fun setNewMiner(minerId: UUID) {
+        if (minerId == id) return
+
+        isMiner = false
+        server.sendObj(
+            StateChangeDto(
+                data = minerId,
+                action = StateAction.SET_NEW_MINER,
             ),
             TopicsList.StateChange.name,
         )
@@ -218,5 +314,17 @@ class Node<T>(
 
         protected const val difficulty = 2
         protected val validPrefix = "0".repeat(difficulty)
+
+        data class UnitTestingData(
+            var numberOfHandledObjs: Int = 0,
+            var numberOfCastedObjs: Int = 0,
+
+            var numberOfHandledVerificationBlocks: Int = 0,
+            var numberOfCastedVerificationBlocks: Int = 0,
+
+            var numberOfHandledVerificationResult: Int = 0,
+            var numberOfSuccessVerifiedObjs: Int = 0,
+        )
+        val unitTestingData = UnitTestingData()
     }
 }

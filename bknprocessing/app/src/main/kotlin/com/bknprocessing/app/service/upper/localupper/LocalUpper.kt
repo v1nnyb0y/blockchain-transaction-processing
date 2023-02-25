@@ -1,21 +1,29 @@
 package com.bknprocessing.app.service.upper.localupper
 
 import com.bknprocessing.app.service.upper.IUpper
-import com.bknprocessing.common.ClientConfiguration
+import com.bknprocessing.app.utils.clientAndServerConfigured
+import com.bknprocessing.app.utils.constructedNode
+import com.bknprocessing.app.utils.logger
 import com.bknprocessing.common.IClient
 import com.bknprocessing.common.IServer
-import com.bknprocessing.common.ServerConfiguration
+import com.bknprocessing.common.globals.ClientConfiguration
+import com.bknprocessing.common.globals.ServerConfiguration
+import com.bknprocessing.common.kafka.KafkaConsumer
 import com.bknprocessing.node.nodeimpl.INode
 import com.bknprocessing.node.nodeimpl.Node
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import org.slf4j.Logger
 import java.time.Instant
 
 abstract class LocalUpper<T>(
-    private val client: IClient,
-    private val server: IServer,
+    private val client: () -> IClient,
+    private val getClientConfiguration: (args: Any) -> ClientConfiguration,
+    private val server: () -> IServer,
+    private val getServerConfiguration: (args: Any) -> ServerConfiguration,
 ) : IUpper<T> {
 
+    val log: Logger by logger()
     protected val nodes = mutableListOf<INode>()
 
     private fun constructNodeCollection(count: Int, isHealthy: Boolean, createdAt: Long, networkSize: Int) {
@@ -28,10 +36,15 @@ abstract class LocalUpper<T>(
 
                     networkSize = networkSize,
 
-                    client = client,
-                    server = server,
+                    client = client().apply {
+                        if (this is KafkaConsumer) {
+                            setup(getClientConfiguration(-1))
+                        }
+                    },
+                    server = server(),
                 ),
             )
+            log.constructedNode(isHealthy, nodes.size - 1)
         }
     }
 
@@ -40,8 +53,11 @@ abstract class LocalUpper<T>(
         constructNodeCollection(nodesCount - unhealthyNodesCount, true, createdAt, nodesCount)
         constructNodeCollection(unhealthyNodesCount, false, createdAt, nodesCount)
 
-        client.setup(ClientConfiguration(capacity = nodes.size))
-        server.setup(ServerConfiguration(capacity = nodes.size))
+        if (client() !is KafkaConsumer) {
+            client().setup(getClientConfiguration(nodes.size))
+        }
+        server().setup(getServerConfiguration(nodes.size))
+        log.clientAndServerConfigured()
 
         supervisorScope {
             for (i in 0 until nodesCount) {
