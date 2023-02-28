@@ -15,6 +15,7 @@ data class Block<T>(
 
     var currentHash: String = "",
     val timestamp: Long = Instant.now().toEpochMilli(),
+
     val objs: MutableList<T> = mutableListOf(),
 
     var nonce: Long = 0,

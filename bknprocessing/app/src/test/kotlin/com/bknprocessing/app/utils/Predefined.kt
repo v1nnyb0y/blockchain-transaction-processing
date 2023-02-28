@@ -7,9 +7,9 @@ import com.bknprocessing.app.type.ValidatorAlgorithm
 class Predefined {
     companion object {
         /* Integration Tests */
-        private const val INTEGRATION_NUMBER_OF_INSTANCES = 100
-        private const val INTEGRATION_NUMBER_OF_UNHEALTHY_NODES = 20
-        private const val INTEGRATION_NUMBER_OF_TRANSACTIONS = 100
+        private const val INTEGRATION_NUMBER_OF_INSTANCES = 10
+        private const val INTEGRATION_NUMBER_OF_UNHEALTHY_NODES = 2
+        private const val INTEGRATION_NUMBER_OF_TRANSACTIONS = 10
 
         val COROUTINE_WITH_POS = ExperimentDto(
             numberOfInstances = INTEGRATION_NUMBER_OF_INSTANCES,
@@ -17,6 +17,13 @@ class Predefined {
             numberOfTransactions = INTEGRATION_NUMBER_OF_TRANSACTIONS,
             validatorAlgo = ValidatorAlgorithm.ProofOfState,
             stateTransferApproach = StateTransferApproach.Coroutine,
+        )
+        val KAFKA_WITH_POS = ExperimentDto(
+            numberOfInstances = INTEGRATION_NUMBER_OF_INSTANCES,
+            numberOfUnhealthyNodes = INTEGRATION_NUMBER_OF_UNHEALTHY_NODES,
+            numberOfTransactions = INTEGRATION_NUMBER_OF_TRANSACTIONS,
+            validatorAlgo = ValidatorAlgorithm.ProofOfState,
+            stateTransferApproach = StateTransferApproach.Kafka,
         )
         /* Integration Tests */
 

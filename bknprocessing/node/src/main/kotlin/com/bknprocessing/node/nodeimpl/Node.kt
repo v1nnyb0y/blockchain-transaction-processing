@@ -64,7 +64,12 @@ open class Node<T>(
     private var isFinished: Boolean = false
     private var stopOnStateChanging: Boolean = false
 
-    protected val calculateHash = { block: Block<T> -> with(block) { "$previousHash$objs$timestamp$nonce".hash() } }
+    protected val calculateHash = { block: Block<T> ->
+        with(block) {
+            // "$previousHash$objs$timestamp$nonce".hash()
+            "$previousHash$timestamp$nonce".hash()
+        }
+    }
     protected val isMined = { block: Block<T> -> with(block) { currentHash.startsWith(validPrefix) } }
     var isMiner = false
 
@@ -95,22 +100,37 @@ open class Node<T>(
         while (!isFinished) {
             delay(DELAY_MILSEC)
             val stateChangeDto = client.getObj(TopicsList.StateChange.name, index) ?: continue
-            var castedStateChangeDto = (stateChangeDto as? StateChangeDto)
+            var castedStateChangeDto = (stateChangeDto as? StateChangeDto<T>)
+
+            var action: StateAction
+            var data: Any?
+
             if (castedStateChangeDto == null) {
                 // for finish process only (can be removed for real project)
-                val transCount = (stateChangeDto as? Int) ?: throw IllegalStateException("Wrong DTO in state change queue")
-                castedStateChangeDto = StateChangeDto(data = transCount, action = StateAction.FINISH)
+                data = (stateChangeDto as? Int)
+
+                if (data == null) {
+                    data = (stateChangeDto as? UUID) ?: throw IllegalStateException("Wrong DTO in state change queue")
+                    action = StateAction.SET_NEW_MINER
+                } else {
+                    action = StateAction.FINISH
+                }
+            } else {
+                action = castedStateChangeDto.action
+                data = castedStateChangeDto.data
             }
 
             stopOnStateChanging = true
-            when (castedStateChangeDto.action) {
-                StateAction.ACCEPT_NEW_BLOCK -> handleAcceptNewBlock(castedStateChangeDto.data as Block<T>)
-                StateAction.ACTUALIZE -> handleRemoveUnhealthyBlocks(castedStateChangeDto.data as Block<T>)
+            when (action) {
+                StateAction.ACCEPT_NEW_BLOCK -> handleAcceptNewBlock(data as Block<T>)
+                StateAction.ACTUALIZE -> handleRemoveUnhealthyBlocks(data as Block<T>)
                 StateAction.FINISH -> {
                     stopOnStateChanging = false
-                    launch { handleFinishNodeExperiment(castedStateChangeDto.data as Int) }
+                    launch { handleFinishNodeExperiment(data as Int) }
                 }
-                StateAction.SET_NEW_MINER -> handleSetNewMiner(castedStateChangeDto.data as UUID)
+                StateAction.SET_NEW_MINER -> {
+                    handleSetNewMiner(data as UUID)
+                }
             }
             stopOnStateChanging = false
         }
@@ -129,17 +149,21 @@ open class Node<T>(
                 val castedObj = (obj as? T) ?: continue
                 unitTestingData.numberOfCastedObjs += 1
 
-                while (stopOnStateChanging) delay(DELAY_MILSEC)
-                val constructedBlock: Block<T> = miner.constructBlock(
-                    castedObj,
-                    lastBlockHashInChain,
-                    id,
-                    index,
-                    amount + 1,
-                )
-                log.constructedBlock(isHealthy, index)
-                val minedBlock: Block<T> = miner.mineBlock(constructedBlock) ?: continue
-                log.minedBlock(isHealthy, index, minedBlock.currentHash)
+                lateinit var constructedBlock: Block<T>
+                lateinit var minedBlock: Block<T>
+                do {
+                    delay(DELAY_MILSEC)
+                    constructedBlock = miner.constructBlock(
+                        castedObj,
+                        lastBlockHashInChain,
+                        id,
+                        index,
+                        amount + 1,
+                    )
+                    log.constructedBlock(isHealthy, index)
+                    minedBlock = miner.mineBlock(constructedBlock) ?: continue
+                    log.minedBlock(isHealthy, index, minedBlock.currentHash)
+                } while (stopOnStateChanging)
 
                 server.sendObj(
                     VerificationDto(
@@ -292,10 +316,7 @@ open class Node<T>(
 
         isMiner = false
         server.sendObj(
-            StateChangeDto(
-                data = minerId,
-                action = StateAction.SET_NEW_MINER,
-            ),
+            minerId,
             TopicsList.StateChange.name,
         )
     }

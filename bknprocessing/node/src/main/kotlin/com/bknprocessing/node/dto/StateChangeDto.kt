@@ -5,7 +5,7 @@ enum class StateAction {
     SET_NEW_MINER,
 }
 
-data class StateChangeDto(
-    val data: Any,
+data class StateChangeDto<T>(
+    val data: Block<T>,
     val action: StateAction,
 )

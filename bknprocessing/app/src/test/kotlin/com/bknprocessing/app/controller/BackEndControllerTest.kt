@@ -36,4 +36,9 @@ class BackEndControllerTest {
     fun `POS and Coroutine`() {
         doAsyncTest(Predefined.COROUTINE_WITH_POS)
     }
+
+    @Test
+    fun `POS and Kafka`() {
+        doAsyncTest(Predefined.KAFKA_WITH_POS)
+    }
 }
