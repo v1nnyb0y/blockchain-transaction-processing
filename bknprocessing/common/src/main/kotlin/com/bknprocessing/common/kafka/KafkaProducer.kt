@@ -4,8 +4,6 @@ import com.bknprocessing.common.IServer
 import com.bknprocessing.common.globals.KafkaServerConfiguration
 import com.bknprocessing.common.globals.ServerConfiguration
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.clients.producer.RecordMetadata
-import java.util.concurrent.Future
 
 class KafkaProducer private constructor() : IServer {
 
@@ -22,8 +20,8 @@ class KafkaProducer private constructor() : IServer {
         val producerRecord: ProducerRecord<String, Any> = ProducerRecord(to, obj)
         val producer = org.apache.kafka.clients.producer.KafkaProducer<String, Any>(options as Map<String, Any>?)
 
-        val future: Future<RecordMetadata> = producer.send(producerRecord)!!
-        return true
+        val future = producer.send(producerRecord).get()
+        return future != null
     }
 
     companion object {

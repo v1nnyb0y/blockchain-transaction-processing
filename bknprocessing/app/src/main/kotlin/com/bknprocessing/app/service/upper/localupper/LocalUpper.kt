@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.slf4j.Logger
 import java.time.Instant
+import java.util.UUID
 
 abstract class LocalUpper<T>(
     private val client: () -> IClient,
@@ -38,7 +39,7 @@ abstract class LocalUpper<T>(
 
                     client = client().apply {
                         if (this is KafkaConsumer) {
-                            setup(getClientConfiguration(-1))
+                            setup(getClientConfiguration(nodes.size))
                         }
                     },
                     server = server(),

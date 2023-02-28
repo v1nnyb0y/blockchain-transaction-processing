@@ -2,53 +2,56 @@ package com.bknprocessing.app.service
 
 import com.bknprocessing.app.data.Transaction
 import com.bknprocessing.app.service.worker.IWorker
-import com.bknprocessing.app.service.worker.KafkaWorker
 import com.bknprocessing.app.service.wrapper.TestedPoolService
 import com.bknprocessing.app.service.wrapper.uppper.ITestedUpper
-import com.bknprocessing.app.service.wrapper.uppper.TestedKafkaUpper
 import com.bknprocessing.app.utils.Predefined.Companion.FUNCTIONAL_NUMBER_OF_INSTANCES
 import com.bknprocessing.app.utils.Predefined.Companion.FUNCTIONAL_NUMBER_OF_TRANSACTIONS
 import com.bknprocessing.app.utils.Predefined.Companion.FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES
 import com.bknprocessing.node.nodeimpl.Node
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-/*abstract*/ class PoolServiceTest {
+abstract class PoolServiceTest(
+    private val upper: ITestedUpper<Transaction>,
+    private val worker: IWorker<Transaction>,
+) {
 
     companion object {
-        private lateinit var poolService: TestedPoolService
-        private lateinit var upper: ITestedUpper<Transaction>
-        private lateinit var worker: IWorker<Transaction>
+        private var poolService: TestedPoolService? = null
+        private var setuping: Boolean = true
+    }
 
-        @JvmStatic
-        @BeforeAll
-        fun setUp(): Unit = runBlocking {
-            upper = TestedKafkaUpper()
-            worker = KafkaWorker() // TODO Vitalii please look
-            // I want to share that constructors from super class (for example: CoroutinePoolService)
-            // and this class should be abstract
-
-            poolService = TestedPoolService(worker, upper).apply {
-                this.run(
-                    FUNCTIONAL_NUMBER_OF_INSTANCES,
-                    FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES,
-                    FUNCTIONAL_NUMBER_OF_TRANSACTIONS,
-                )
+    init {
+        runBlocking {
+            if (poolService == null) {
+                poolService = TestedPoolService(worker, upper).apply {
+                    this.run(
+                        FUNCTIONAL_NUMBER_OF_INSTANCES,
+                        FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES,
+                        FUNCTIONAL_NUMBER_OF_TRANSACTIONS,
+                    )
+                }
+                setuping = false
             }
         }
     }
 
+    private fun runBlockingUntilSetuping() = runBlocking {
+        while (setuping) { delay(100) }
+    }
+
     @Test
     fun `created correct number of nodes`() {
-        Assertions.assertEquals(FUNCTIONAL_NUMBER_OF_INSTANCES, upper.getListNodes().size)
+        runBlockingUntilSetuping()
+        Assertions.assertEquals(FUNCTIONAL_NUMBER_OF_INSTANCES, poolService!!.upper.getListNodes().size)
     }
 
     @Test
     fun `create correct number of healthy and unhealthy nodes`() {
-        val countOfHealthy = upper.getListNodes().count { it.isHealthy }
-        val countOfUnhealthy = upper.getListNodes().count { !it.isHealthy }
+        val countOfHealthy = poolService!!.upper.getListNodes().count { it.isHealthy }
+        val countOfUnhealthy = poolService!!.upper.getListNodes().count { !it.isHealthy }
 
         Assertions.assertEquals(FUNCTIONAL_NUMBER_OF_INSTANCES - FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES, countOfHealthy)
         Assertions.assertEquals(FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES, countOfUnhealthy)
@@ -56,20 +59,23 @@ import org.junit.jupiter.api.Test
 
     @Test
     fun `all nodes has unique id`() {
-        val countOfUnique = upper.getListNodes().distinctBy { it.id }.count()
+        runBlockingUntilSetuping()
+        val countOfUnique = poolService!!.upper.getListNodes().distinctBy { it.id }.count()
         Assertions.assertEquals(FUNCTIONAL_NUMBER_OF_INSTANCES, countOfUnique)
     }
 
     @Test
     fun `all nodes has unique index`() {
-        val countOfUnique = upper.getListNodes().distinctBy { it.index }.count()
+        runBlockingUntilSetuping()
+        val countOfUnique = poolService!!.upper.getListNodes().distinctBy { it.index }.count()
         Assertions.assertEquals(FUNCTIONAL_NUMBER_OF_INSTANCES, countOfUnique)
     }
 
     @Test
     fun `at least one miner and one verifier`() {
-        val countOfMiners = upper.getListNodes().count { it.isMiner }
-        val countOfVerifiers = upper.getListNodes().count { !it.isMiner }
+        runBlockingUntilSetuping()
+        val countOfMiners = poolService!!.upper.getListNodes().count { it.isMiner }
+        val countOfVerifiers = poolService!!.upper.getListNodes().count { !it.isMiner }
 
         Assertions.assertTrue(countOfMiners > 0)
         Assertions.assertTrue(countOfVerifiers > 0)
@@ -77,14 +83,16 @@ import org.junit.jupiter.api.Test
 
     @Test
     fun `count of sent trans_correctness`() {
+        runBlockingUntilSetuping()
         Assertions.assertEquals(
             FUNCTIONAL_NUMBER_OF_TRANSACTIONS,
-            poolService.getPoolServiceUnitData().numberOfSentTransactions,
+            poolService!!.getPoolServiceUnitData().numberOfSentTransactions,
         )
     }
 
     @Test
     fun `count of received trans_correctness`() {
+        runBlockingUntilSetuping()
         Assertions.assertEquals(
             FUNCTIONAL_NUMBER_OF_INSTANCES,
             Node.unitTestingData.numberOfHandledObjs,
@@ -93,6 +101,7 @@ import org.junit.jupiter.api.Test
 
     @Test
     fun `count of received blocks for verify_correctness`() {
+        runBlockingUntilSetuping()
         Assertions.assertEquals(
             FUNCTIONAL_NUMBER_OF_TRANSACTIONS * FUNCTIONAL_NUMBER_OF_INSTANCES,
             Node.unitTestingData.numberOfHandledVerificationBlocks,
@@ -101,6 +110,7 @@ import org.junit.jupiter.api.Test
 
     @Test
     fun `count of received verification results_correctness`() {
+        runBlockingUntilSetuping()
         Assertions.assertEquals(
             FUNCTIONAL_NUMBER_OF_TRANSACTIONS * (FUNCTIONAL_NUMBER_OF_INSTANCES - 1),
             Node.unitTestingData.numberOfHandledVerificationResult,
@@ -109,6 +119,7 @@ import org.junit.jupiter.api.Test
 
     @Test
     fun `count of success verifications_correctness`() {
+        runBlockingUntilSetuping()
         Assertions.assertEquals(
             FUNCTIONAL_NUMBER_OF_TRANSACTIONS,
             Node.unitTestingData.numberOfSuccessVerifiedObjs,
@@ -117,6 +128,7 @@ import org.junit.jupiter.api.Test
 
     @Test
     fun `all casts are correct`() {
+        runBlockingUntilSetuping()
         Assertions.assertEquals(
             FUNCTIONAL_NUMBER_OF_TRANSACTIONS,
             Node.unitTestingData.numberOfCastedObjs,

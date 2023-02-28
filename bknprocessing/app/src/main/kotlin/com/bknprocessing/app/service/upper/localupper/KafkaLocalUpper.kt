@@ -13,9 +13,13 @@ open class KafkaLocalUpper<T>(
     client: () -> IClient = { KafkaConsumer() },
     server: () -> IServer = { KafkaProducer.INSTANCE },
 
-    getClientConfiguration: (Any) -> ClientConfiguration = {
-        KafkaClientConfiguration()
-    },
+    getClientConfiguration: (Any) -> ClientConfiguration =
+        { nodeIndex: Any ->
+            KafkaClientConfiguration(
+                server = "localhost:29092",
+                nodeIndex = nodeIndex as Int,
+            )
+        },
     getServerConfiguration: (Any) -> ServerConfiguration =
         { _: Any ->
             KafkaServerConfiguration(

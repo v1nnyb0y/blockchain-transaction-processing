@@ -2,19 +2,43 @@ package com.bknprocessing.common.kafka
 
 import com.bknprocessing.common.IClient
 import com.bknprocessing.common.globals.ClientConfiguration
+import com.bknprocessing.common.globals.KafkaClientConfiguration
 import com.bknprocessing.common.globals.TopicsList
-import org.springframework.kafka.annotation.KafkaListener
-import java.util.LinkedList
-import java.util.Queue
+import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.common.serialization.StringDeserializer
+import org.springframework.kafka.support.serializer.JsonDeserializer
 
-class KafkaConsumer : IClient {
+open class KafkaConsumer : IClient {
 
-    private val objs: Queue<Any> = LinkedList()
-    private val verificationBlock: Queue<Any> = LinkedList()
-    private val verificationResult: Queue<Any> = LinkedList()
-    private val stateChange: Queue<Any> = LinkedList()
+    private lateinit var objQueueConsumer: KafkaConsumer<String, Any>
+    private lateinit var verificationBlockConsumer: KafkaConsumer<String, Any>
+    private lateinit var verificationResultConsumer: KafkaConsumer<String, Any>
+    private lateinit var stateChangeConsumer: KafkaConsumer<String, Any>
 
-    override fun setup(configuration: ClientConfiguration) { }
+    override fun setup(configuration: ClientConfiguration) {
+        val castedConfiguration = configuration as? KafkaClientConfiguration ?: throw IllegalStateException("Wrong client configuration")
+
+        val options: MutableMap<String, Any> = mutableMapOf()
+
+        options["bootstrap.servers"] = castedConfiguration.server
+        options["auto.offset.reset"] = "earliest"
+
+        options["group.id"] = "objQueue"
+        objQueueConsumer = KafkaConsumer(options, StringDeserializer(), JsonDeserializer())
+        objQueueConsumer.subscribe(listOf(TopicsList.ObjQueue.name))
+
+        options["group.id"] = "verificationResult"
+        verificationResultConsumer = KafkaConsumer(options, StringDeserializer(), JsonDeserializer())
+        verificationResultConsumer.subscribe(listOf(TopicsList.VerificationResultBlockQueue.name))
+
+        options["group.id"] = "verificationBlock-${castedConfiguration.nodeIndex}"
+        verificationBlockConsumer = KafkaConsumer(options, StringDeserializer(), JsonDeserializer())
+        verificationBlockConsumer.subscribe(listOf(TopicsList.VerificationBlockQueue.name))
+
+        options["group.id"] = "stateChange-${castedConfiguration.nodeIndex}"
+        stateChangeConsumer = KafkaConsumer(options, StringDeserializer(), JsonDeserializer())
+        stateChangeConsumer.subscribe(listOf(TopicsList.StateChange.name))
+    }
 
     override fun getObj(from: String): Any? {
         return getObj(from, -1)
@@ -28,25 +52,5 @@ class KafkaConsumer : IClient {
             TopicsList.StateChange.name -> if (stateChange.isNotEmpty()) stateChange.poll() else null
             else -> null
         }
-    }
-
-    @KafkaListener(topics = ["ObjQueue"], groupId = "obj_queue")
-    private fun objsListener(value: Any) {
-        objs.add(value)
-    }
-
-    @KafkaListener(topics = ["VerificationBlockQueue"], groupId = "verification_block")
-    private fun verificationBlockListener(value: Any) {
-        verificationBlock.add(value)
-    }
-
-    @KafkaListener(topics = ["VerificationResultBlockQueue"], groupId = "verification_result")
-    private fun verificationResultListener(value: Any) {
-        verificationResult.add(value)
-    }
-
-    @KafkaListener(topics = ["StateChange"], groupId = "state_change")
-    private fun stateChangeListener(value: Any) {
-        stateChange.add(value)
     }
 }

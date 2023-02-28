@@ -7,7 +7,7 @@ import com.bknprocessing.app.service.wrapper.uppper.ITestedUpper
 
 class TestedPoolService(
     worker: IWorker<Transaction>,
-    upper: ITestedUpper<Transaction>,
+    val upper: ITestedUpper<Transaction>,
 ) : PoolService(worker, upper) {
 
     fun getPoolServiceUnitData() = unitTestingData

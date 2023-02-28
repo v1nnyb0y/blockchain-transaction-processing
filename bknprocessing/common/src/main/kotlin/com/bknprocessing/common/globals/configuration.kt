@@ -15,4 +15,7 @@ data class KafkaServerConfiguration(
     val keySerializer: String,
     val valueSerializer: String,
 ) : ServerConfiguration()
-open class KafkaClientConfiguration : ClientConfiguration()
+open class KafkaClientConfiguration(
+    val server: String,
+    val nodeIndex: Int
+) : ClientConfiguration()

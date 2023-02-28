@@ -1,3 +1,6 @@
 package com.bknprocessing.app.service
 
-// class CoroutinePoolService : PoolServiceTest<CoroutinePoolService>()
+import com.bknprocessing.app.service.worker.CoroutineWorker
+import com.bknprocessing.app.service.wrapper.uppper.TestedCoroutineUpper
+
+class CoroutinePoolService : PoolServiceTest(TestedCoroutineUpper(), CoroutineWorker())
