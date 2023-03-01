@@ -57,7 +57,6 @@ class NodeController(
     }
 
     @GetMapping("/healthCheck")
-    fun healthCheck(): String {
-        return "Ok"
+    fun healthCheck() {
     }
 }

@@ -17,5 +17,9 @@ data class KafkaServerConfiguration(
 ) : ServerConfiguration()
 open class KafkaClientConfiguration(
     val server: String,
-    val nodeIndex: Int
+    val nodeIndex: Int,
 ) : ClientConfiguration()
+
+data class RestJsonServerConfiguration(
+    val capacity: Int,
+) : ServerConfiguration()
