@@ -2,8 +2,10 @@ package com.bknprocessing.app.service
 
 import com.bknprocessing.app.service.upper.localupper.CoroutineLocalUpper
 import com.bknprocessing.app.service.upper.localupper.KafkaLocalUpper
+import com.bknprocessing.app.service.upper.remoteupper.RestJsonRemoteUpper
 import com.bknprocessing.app.service.worker.CoroutineWorker
 import com.bknprocessing.app.service.worker.KafkaWorker
+import com.bknprocessing.app.service.worker.RestJsonWorker
 import com.bknprocessing.app.type.StateTransferApproach
 import com.bknprocessing.app.type.ValidatorAlgorithm
 import kotlinx.coroutines.runBlocking
@@ -27,6 +29,11 @@ class BlockChainService {
             }
             StateTransferApproach.Kafka -> {
                 with(PoolService(KafkaWorker(), KafkaLocalUpper())) {
+                    this.run(numberOfInstances, numberOfUnhealthyNodes, numberOfTransactions)
+                }
+            }
+            StateTransferApproach.REST -> {
+                with(PoolService(RestJsonWorker(), RestJsonRemoteUpper())) {
                     this.run(numberOfInstances, numberOfUnhealthyNodes, numberOfTransactions)
                 }
             }

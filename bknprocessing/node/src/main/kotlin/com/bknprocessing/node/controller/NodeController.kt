@@ -10,8 +10,9 @@ import org.springframework.web.bind.annotation.RestController
 
 data class StarterConfig(
     val totalNodesCount: Int,
-    val unhealthyNodesCount: Int,
+    val isHealthy: Boolean,
     val nodeIndex: Int,
+    val createdAt: Long,
 )
 
 @RestController
@@ -26,8 +27,9 @@ class NodeController(
         log.info("NodeController: init processed")
         nodeService.init(
             starterConfig.totalNodesCount,
-            starterConfig.unhealthyNodesCount,
+            starterConfig.isHealthy,
             starterConfig.nodeIndex,
+            starterConfig.createdAt,
         )
         return "Ok"
     }

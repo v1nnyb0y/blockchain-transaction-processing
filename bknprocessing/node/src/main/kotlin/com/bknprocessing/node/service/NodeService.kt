@@ -11,7 +11,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
 import org.slf4j.Logger
 import org.springframework.stereotype.Service
-import java.time.Instant
 
 @Service
 class NodeService {
@@ -22,12 +21,13 @@ class NodeService {
     private lateinit var client: RestClient
     private lateinit var server: RestServer
 
-    fun init(totalNodesCount: Int, unhealthyNodesCount: Int, nodeIndex: Int) {
+    fun init(totalNodesCount: Int, isHealthy: Boolean, nodeIndex: Int, createdAt: Long) {
         node = Node<Transaction>(
             index = nodeIndex,
-            isHealthy = nodeIndex < totalNodesCount - unhealthyNodesCount, // 2 < 7 - 3, 4 < 7 - 3
-            createdAt = Instant.now().toEpochMilli(),
-            networkSize = 1,
+            // isHealthy = nodeIndex < totalNodesCount - unhealthyNodesCount, // 2 < 7 - 3, 4 < 7 - 3
+            isHealthy = isHealthy,
+            createdAt = createdAt,
+            networkSize = totalNodesCount,
 
             client = RestClient.INSTANCE,
             server = RestServer.INSTANCE,
