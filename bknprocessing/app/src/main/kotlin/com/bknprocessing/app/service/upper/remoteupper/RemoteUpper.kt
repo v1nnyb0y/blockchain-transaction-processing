@@ -7,6 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.awaitBodilessEntity
 import java.time.Instant
 
 // TODO Vitalii for implementation (docker instances)
@@ -19,14 +20,16 @@ abstract class RemoteUpper<T>(
 
     private fun constructNodeCollection(count: Int, isHealthy: Boolean, createdAt: Long, networkSize: Int) = runBlocking {
         for (idx in 0 until count) {
-            val webClient = WebClient.create("http://localhost:${80 + nodes.size + 1}")
-            webClient.post()
+            val webClient = WebClient.create("http://localhost:${8080 + nodes.size}")
+            val response = webClient.post()
                 .uri("/init")
                 .bodyValue(
                     getNodeConfiguration(networkSize, isHealthy, nodes.size, createdAt),
                 )
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
+                .awaitBodilessEntity()
+            nodes.add(true)
             log.constructedNode(isHealthy, nodes.size - 1)
         }
     }

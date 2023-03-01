@@ -20,6 +20,7 @@ open class PoolService(
     suspend fun run(nodesCount: Int, unhealthyNodesCount: Int, numberOfTransactions: Int) = supervisorScope {
         launch { upper.startNodes(nodesCount, unhealthyNodesCount) }
 
+        delay(1000)
         launch {
             var sentTransactions = 0
             while (sentTransactions < numberOfTransactions) {

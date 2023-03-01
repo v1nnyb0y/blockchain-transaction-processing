@@ -21,7 +21,10 @@ class NodeService {
     private lateinit var client: RestClient
     private lateinit var server: RestServer
 
-    fun init(totalNodesCount: Int, isHealthy: Boolean, nodeIndex: Int, createdAt: Long) {
+    suspend fun init(totalNodesCount: Int, isHealthy: Boolean, nodeIndex: Int, createdAt: Long) {
+        client = RestClient.INSTANCE
+        server = RestServer.INSTANCE
+
         node = Node<Transaction>(
             index = nodeIndex,
             // isHealthy = nodeIndex < totalNodesCount - unhealthyNodesCount, // 2 < 7 - 3, 4 < 7 - 3
@@ -33,14 +36,10 @@ class NodeService {
             server = RestServer.INSTANCE,
         )
 
-        runBlocking {
-            supervisorScope {
-                for (i in 0 until totalNodesCount) {
-                    launch { node.runMiner() }
-                    launch { node.runVerifier() }
-                    launch { node.waitStateChangeAction() }
-                }
-            }
+        supervisorScope {
+            launch { node.runMiner() }
+            launch { node.runVerifier() }
+            launch { node.waitStateChangeAction() }
         }
     }
 

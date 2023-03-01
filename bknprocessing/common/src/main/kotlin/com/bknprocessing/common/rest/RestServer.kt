@@ -7,6 +7,7 @@ import com.bknprocessing.common.globals.TopicsList
 import kotlinx.coroutines.runBlocking
 import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.awaitBodilessEntity
 
 class RestServer private constructor() : IServer {
 
@@ -50,12 +51,13 @@ class RestServer private constructor() : IServer {
     }
 
     private fun sendRequest(endPointConnectionString: String, nodeIndex: Int, data: Any) = runBlocking {
-        val webClient = WebClient.create("http://localhost:${80 + nodeIndex + 1}")
-        webClient.post()
+        val webClient = WebClient.create("http://localhost:${8080 + nodeIndex}")
+        val response = webClient.post()
             .uri("/$endPointConnectionString")
             .bodyValue(data)
             .accept(APPLICATION_JSON)
             .retrieve()
+            .awaitBodilessEntity()
     }
 
     private fun findMiner(): List<Int> {
