@@ -5,8 +5,15 @@ import com.bknprocessing.node.utils.logger
 import org.slf4j.Logger
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+
+data class StarterConfig(
+    val totalNodesCount: Int,
+    val unhealthyNodesCount: Int,
+    val nodeIndex: Int
+)
 
 @RestController
 class NodeController(
@@ -16,35 +23,37 @@ class NodeController(
     private val log: Logger by logger()
 
     @PostMapping("/init")
-    fun init(
-        @RequestParam totalNodesCount: Int,
-        @RequestParam unhealthyNodesCount: Int,
-        @RequestParam nodeIndex: Int,
-    ): String {
+    fun init(@RequestBody starterConfig: StarterConfig): String {
         log.info("NodeController: init processed")
-        nodeService.init(totalNodesCount, unhealthyNodesCount, nodeIndex)
+        nodeService.init(
+            starterConfig.totalNodesCount,
+            starterConfig.unhealthyNodesCount,
+            starterConfig.nodeIndex)
         return "Ok"
+    }
+
+    @PostMapping("/verifyObj")
+    fun verifyObj(@RequestBody obj: Any) {
+        log.info("NodeController: verifyObj processed")
+        nodeService.verifyObj(obj)
     }
 
     @PostMapping("/verify")
-    fun verify(@RequestParam obj: Any): String {
+    fun verify(@RequestBody obj: Any) {
         log.info("NodeController: verify processed")
         nodeService.verify(obj)
-        return "Ok"
     }
 
     @PostMapping("/verifyResult")
-    fun verifyResult(@RequestParam obj: Any): String {
+    fun verifyResult(@RequestBody obj: Any) {
         log.info("NodeController: verifyResult processed")
         nodeService.verifyResult(obj)
-        return "Ok"
     }
 
     @PostMapping("/smartContract")
-    fun smartContract(@RequestParam obj: Any): String {
+    fun smartContract(@RequestBody obj: Any) {
         log.info("NodeController: smartContract processed")
         nodeService.smartContract(obj)
-        return "Ok"
     }
 
     @GetMapping("/healthCheck")

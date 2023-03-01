@@ -1,7 +1,5 @@
 package com.bknprocessing.node.service
 
-import com.bknprocessing.common.IClient
-import com.bknprocessing.common.IServer
 import com.bknprocessing.common.data.Transaction
 import com.bknprocessing.common.restJson.RestClient
 import com.bknprocessing.common.restJson.RestServer
@@ -21,8 +19,8 @@ class NodeService {
     private val log: Logger by logger()
 
     private lateinit var node: INode
-    private lateinit var client: IClient
-    private lateinit var server: IServer
+    private lateinit var client: RestClient
+    private lateinit var server: RestServer
 
     fun init(totalNodesCount: Int, unhealthyNodesCount: Int, nodeIndex: Int) {
         node = Node<Transaction>(
@@ -46,20 +44,23 @@ class NodeService {
         }
     }
 
+    fun verifyObj(obj: Any) {
+        log.info("NodeService: verify obj")
+        client.appendObjQueue(obj)
+    }
+
     fun verify(obj: Any) {
         log.info("NodeService: verifying")
-        server.sendObj(obj, Topics.VerificationBlockQueue.name)
+        client.appendVerificationBlockQueue(obj)
     }
 
     fun verifyResult(obj: Any) {
         log.info("NodeService: verifyResult")
-        server.sendObj(obj, Topics.VerificationResultBlockQueue.name)
+        client.appendVerificationResultQueue(obj)
     }
 
     fun smartContract(obj: Any) {
         log.info("NodeService: smartContract")
-        server.sendObj(obj, Topics.StateChange.name)
+        client.appendStateChangeQueue(obj)
     }
 }
-
-private enum class Topics { ObjQueue, VerificationBlockQueue, VerificationResultBlockQueue, StateChange, }
