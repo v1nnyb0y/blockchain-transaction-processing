@@ -16,8 +16,8 @@ class KafkaProducer private constructor() : IServer {
         options["value.serializer"] = castedConfiguration.valueSerializer
     }
 
-    override fun sendObj(obj: Any, to: String): Boolean {
-        val producerRecord: ProducerRecord<String, Any> = ProducerRecord(to, obj)
+    override fun sendObj(element: Any, topic: String): Boolean {
+        val producerRecord: ProducerRecord<String, Any> = ProducerRecord(topic, element)
         val producer = org.apache.kafka.clients.producer.KafkaProducer<String, Any>(options as Map<String, Any>?)
 
         val future = producer.send(producerRecord).get()

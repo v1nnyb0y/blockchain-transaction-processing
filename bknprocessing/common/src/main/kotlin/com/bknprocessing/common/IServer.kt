@@ -6,5 +6,5 @@ interface IServer {
 
     fun setup(configuration: ServerConfiguration)
 
-    fun sendObj(obj: Any, to: String): Boolean
+    fun sendObj(element: Any, topic: String): Boolean
 }

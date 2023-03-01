@@ -2,12 +2,15 @@ package com.bknprocessing.node.service
 
 import com.bknprocessing.common.IClient
 import com.bknprocessing.common.IServer
-import com.bknprocessing.common.coroutine.CoroutineTransferStorage
 import com.bknprocessing.common.data.Transaction
 import com.bknprocessing.common.globals.ClientConfiguration
 import com.bknprocessing.common.globals.ServerConfiguration
 import com.bknprocessing.node.nodeimpl.INode
 import com.bknprocessing.node.nodeimpl.Node
+import com.bknprocessing.node.service.RestClient.Companion.blockVerificationChannel
+import com.bknprocessing.node.service.RestClient.Companion.blockVerificationResultChannel
+import com.bknprocessing.node.service.RestClient.Companion.objChannel
+import com.bknprocessing.node.service.RestClient.Companion.smartContractChannel
 import com.bknprocessing.node.utils.logger
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.BroadcastChannel
@@ -26,15 +29,19 @@ class NodeService {
     private val log: Logger by logger()
 
     private lateinit var node: INode
+    private lateinit var client: IClient
+    private lateinit var server: IServer
 
     fun init(totalNodesCount: Int, unhealthyNodesCount: Int, nodeIndex: Int) {
+        server = RestServer()
+        client = RestClient()
         node = Node<Transaction>(
             index = nodeIndex,
             isHealthy = nodeIndex < totalNodesCount - unhealthyNodesCount, // 2 < 7 - 3, 4 < 7 - 3
             createdAt = Instant.now().toEpochMilli(),
             networkSize = 1,
 
-            client = RestClient(),
+            client = client,
             server = RestServer(),
         )
 
@@ -50,15 +57,18 @@ class NodeService {
     }
 
     fun verify(obj: Any) {
-        // TODO
+        log.info("NodeService: verifying")
+        server.sendObj(obj, Topics.VerificationBlockQueue.name)
     }
 
     fun verifyResult(obj: Any) {
-        // TODO
+        log.info("NodeService: verifyResult")
+        server.sendObj(obj, Topics.VerificationResultBlockQueue.name)
     }
 
     fun smartContract(obj: Any) {
-        // TODO
+        log.info("NodeService: smartContract")
+        server.sendObj(obj, Topics.StateChange.name)
     }
 }
 
@@ -67,14 +77,14 @@ class RestServer : IServer {
     override fun setup(configuration: ServerConfiguration) {}
 
     @OptIn(ObsoleteCoroutinesApi::class)
-    override fun sendObj(obj: Any, to: String): Boolean {
-        return when (to) {
-            Topics.ObjQueue.name -> CoroutineTransferStorage.objChannel.trySend(obj).isSuccess
-            Topics.VerificationBlockQueue.name -> CoroutineTransferStorage.blockVerificationChannel.trySend(obj).isSuccess
-            Topics.VerificationResultBlockQueue.name -> CoroutineTransferStorage.blockVerificationResultChannel.trySend(
-                obj,
+    override fun sendObj(element: Any, topic: String): Boolean {
+        return when (topic) {
+            Topics.ObjQueue.name -> objChannel.trySend(element).isSuccess
+            Topics.VerificationBlockQueue.name -> blockVerificationChannel.trySend(element).isSuccess
+            Topics.VerificationResultBlockQueue.name -> blockVerificationResultChannel.trySend(
+                element,
             ).isSuccess
-            Topics.StateChange.name -> CoroutineTransferStorage.smartContractChannel.trySend(obj).isSuccess
+            Topics.StateChange.name -> smartContractChannel.trySend(element).isSuccess
             else -> false
         }
     }
