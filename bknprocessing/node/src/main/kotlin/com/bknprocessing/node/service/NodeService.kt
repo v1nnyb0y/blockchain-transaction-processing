@@ -1,8 +1,8 @@
 package com.bknprocessing.node.service
 
 import com.bknprocessing.common.data.Transaction
-import com.bknprocessing.common.restJson.RestClient
-import com.bknprocessing.common.restJson.RestServer
+import com.bknprocessing.common.rest.RestClient
+import com.bknprocessing.common.rest.RestServer
 import com.bknprocessing.node.nodeimpl.INode
 import com.bknprocessing.node.nodeimpl.Node
 import com.bknprocessing.node.utils.logger

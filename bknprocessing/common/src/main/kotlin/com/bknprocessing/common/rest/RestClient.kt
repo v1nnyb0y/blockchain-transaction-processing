@@ -1,4 +1,4 @@
-package com.bknprocessing.common.restJson
+package com.bknprocessing.common.rest
 
 import com.bknprocessing.common.IClient
 import com.bknprocessing.common.globals.ClientConfiguration

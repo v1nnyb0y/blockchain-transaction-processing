@@ -1,4 +1,4 @@
-package com.bknprocessing.app.controllers
+package com.bknprocessing.node.controller
 
 import com.bknprocessing.node.service.NodeService
 import com.bknprocessing.node.utils.logger
@@ -6,13 +6,12 @@ import org.slf4j.Logger
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 data class StarterConfig(
     val totalNodesCount: Int,
     val unhealthyNodesCount: Int,
-    val nodeIndex: Int
+    val nodeIndex: Int,
 )
 
 @RestController
@@ -28,7 +27,8 @@ class NodeController(
         nodeService.init(
             starterConfig.totalNodesCount,
             starterConfig.unhealthyNodesCount,
-            starterConfig.nodeIndex)
+            starterConfig.nodeIndex,
+        )
         return "Ok"
     }
 
