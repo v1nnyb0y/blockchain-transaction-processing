@@ -1,12 +1,12 @@
 package com.bknprocessing.app.service
 
-import com.bknprocessing.app.data.Transaction
 import com.bknprocessing.app.service.worker.IWorker
 import com.bknprocessing.app.service.wrapper.TestedPoolService
 import com.bknprocessing.app.service.wrapper.uppper.ITestedUpper
 import com.bknprocessing.app.utils.Predefined.Companion.FUNCTIONAL_NUMBER_OF_INSTANCES
 import com.bknprocessing.app.utils.Predefined.Companion.FUNCTIONAL_NUMBER_OF_TRANSACTIONS
 import com.bknprocessing.app.utils.Predefined.Companion.FUNCTIONAL_NUMBER_OF_UNHEALTHY_NODES
+import com.bknprocessing.common.data.Transaction
 import com.bknprocessing.node.nodeimpl.Node
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking

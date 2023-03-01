@@ -1,4 +1,4 @@
-package com.bknprocessing.app.data
+package com.bknprocessing.common.data
 
 import java.util.UUID
 

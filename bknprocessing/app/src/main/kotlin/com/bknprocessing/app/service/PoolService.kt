@@ -1,8 +1,8 @@
 package com.bknprocessing.app.service
 
-import com.bknprocessing.app.data.Transaction
 import com.bknprocessing.app.service.upper.IUpper
 import com.bknprocessing.app.service.worker.IWorker
+import com.bknprocessing.common.data.Transaction
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
