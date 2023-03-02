@@ -8,7 +8,7 @@ import kotlinx.coroutines.supervisorScope
 import org.slf4j.Logger
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.awaitBodilessEntity
+import org.springframework.web.reactive.function.client.awaitBodyOrNull
 import java.time.Instant
 
 // TODO Vitalii for implementation (docker instances)
@@ -35,12 +35,12 @@ abstract class RemoteUpper<T>(
                 // log.constructedNode(, nodes.size - 1)
                 launch {
                     val webClient = WebClient.create("http://localhost:${8080 + idx}")
-                    val response = webClient.post()
+                    webClient.post()
                         .uri("/init")
                         .bodyValue(conf)
                         .accept(MediaType.APPLICATION_JSON)
                         .retrieve()
-                        .awaitBodilessEntity()
+                        .awaitBodyOrNull<String>()
                 }
             }
         }

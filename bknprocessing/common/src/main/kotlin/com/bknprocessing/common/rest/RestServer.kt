@@ -52,7 +52,7 @@ class RestServer private constructor() : IServer {
 
     private fun sendRequest(endPointConnectionString: String, nodeIndex: Int, data: Any) = runBlocking {
         val webClient = WebClient.create("http://localhost:${8080 + nodeIndex}")
-        val response = webClient.post()
+        webClient.post()
             .uri("/$endPointConnectionString")
             .bodyValue(data)
             .accept(APPLICATION_JSON)

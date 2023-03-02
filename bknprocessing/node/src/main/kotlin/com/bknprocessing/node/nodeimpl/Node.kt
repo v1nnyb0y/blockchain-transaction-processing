@@ -30,7 +30,10 @@ import com.bknprocessing.node.utils.startSmFinishProcess
 import com.bknprocessing.node.utils.startSmartContractListener
 import com.bknprocessing.node.utils.startVerifier
 import com.bknprocessing.node.utils.startVerify
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -59,8 +62,12 @@ open class Node<T>(
         StateChange,
     }
 
-    @Autowired
-    lateinit var objectMapper: ObjectMapper
+    private val objectMapper = jacksonObjectMapper()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+//            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+//            .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE)
+//            .registerModule(KotlinModule.Builder().build())
+        .registerModule(JavaTimeModule())!!
 
     protected var nodeInfos: MutableMap<UUID, Int> = mutableMapOf()
     protected var chain: MutableList<Block<T>> = mutableListOf()
@@ -112,23 +119,22 @@ open class Node<T>(
             var data: Any?
 
             if (castedStateChangeDto == null) {
-                val verificationDtoJson = objectMapper.writeValueAsString(castedStateChangeDto)
-                log.info("RunVerifier VerificationDtoJson: $verificationDtoJson")
-                castedStateChangeDto =
-                    objectMapper.readValue(verificationDtoJson, StateChangeDto::class.java) as? StateChangeDto<T>
-                if (castedStateChangeDto == null) {
-                    // for finish process only (can be removed for real project)
-                    data = (stateChangeDto as? Int)
-
+                data = (stateChangeDto as? Int)
+                if (data == null) {
+                    data = (stateChangeDto as? UUID)
                     if (data == null) {
-                        data = (stateChangeDto as? UUID) ?: throw IllegalStateException("Wrong DTO in stateChange queue")
-                        action = StateAction.SET_NEW_MINER
+                        val verificationDtoJson = objectMapper.writeValueAsString(stateChangeDto)
+                        log.info("RunVerifier VerificationDtoJson: $verificationDtoJson")
+                        castedStateChangeDto =
+                            objectMapper.readValue(verificationDtoJson, StateChangeDto::class.java) as? StateChangeDto<T>
+                                ?: throw IllegalStateException("Wrong DTO in stateChange queue")
+                        action = castedStateChangeDto.action
+                        data = castedStateChangeDto.data
                     } else {
-                        action = StateAction.FINISH
+                        action = StateAction.SET_NEW_MINER
                     }
                 } else {
-                    action = castedStateChangeDto.action
-                    data = castedStateChangeDto.data
+                    action = StateAction.FINISH
                 }
             } else {
                 action = castedStateChangeDto.action
@@ -199,7 +205,7 @@ open class Node<T>(
                     val verificationResult = client.getObj(TopicsList.VerificationResultBlockQueue.name) ?: continue
                     var castedVerificationResultDto = (verificationResult as? VerificationResultDto)
                     if (castedVerificationResultDto == null) {
-                        val verificationResultDtoJson = objectMapper.writeValueAsString(castedVerificationResultDto)
+                        val verificationResultDtoJson = objectMapper.writeValueAsString(verificationResult)
                         log.info("RunVerifier VerificationDtoJson: $verificationResultDtoJson")
                         castedVerificationResultDto =
                             objectMapper.readValue(verificationResultDtoJson, VerificationResultDto::class.java)

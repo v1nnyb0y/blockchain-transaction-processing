@@ -23,7 +23,7 @@ class NodeController(
     private val log: Logger by logger()
 
     @PostMapping("/init")
-    fun init(@RequestBody starterConfig: StarterConfig) {
+    fun init(@RequestBody starterConfig: StarterConfig): String {
         log.info("NodeController: init processed")
         nodeService.init(
             starterConfig.totalNodesCount,
@@ -31,6 +31,7 @@ class NodeController(
             starterConfig.nodeIndex,
             starterConfig.createdAt,
         )
+        return "Ok"
     }
 
     @PostMapping("/verifyObj")
