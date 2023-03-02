@@ -31,14 +31,12 @@ import com.bknprocessing.node.utils.startSmartContractListener
 import com.bknprocessing.node.utils.startVerifier
 import com.bknprocessing.node.utils.startVerify
 import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.slf4j.Logger
-import org.springframework.beans.factory.annotation.Autowired
 import java.util.UUID
 import kotlin.random.Random
 

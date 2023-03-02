@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.slf4j.Logger
 import java.time.Instant
-import java.util.UUID
 
 abstract class LocalUpper<T>(
     private val client: () -> IClient,
