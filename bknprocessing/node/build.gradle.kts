@@ -11,6 +11,7 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.slf4j:slf4j-api:2.0.6")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")

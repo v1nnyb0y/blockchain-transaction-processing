@@ -30,6 +30,9 @@ import com.bknprocessing.node.utils.startSmFinishProcess
 import com.bknprocessing.node.utils.startSmartContractListener
 import com.bknprocessing.node.utils.startVerifier
 import com.bknprocessing.node.utils.startVerify
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -75,6 +78,9 @@ open class Node<T>(
 
     protected val miner: INodeMiner<T> = NodeMinerImpl(calculateHash, isMined)
     private val verifier: INodeVerifier<T> = NodeVerifierImpl(calculateHash, isMined)
+    private val objectMapper = ObjectMapper()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .registerModule(JavaTimeModule())
 
     init {
         if (index == 0) {
@@ -227,7 +233,12 @@ open class Node<T>(
             val verificationDto = client.getObj(TopicsList.VerificationBlockQueue.name, index) ?: continue
             unitTestingData.numberOfHandledVerificationBlocks += 1
 
-            val castedVerificationDto = (verificationDto as? VerificationDto<T>) ?: throw IllegalStateException("Wrong DTO in verification queue")
+            var castedVerificationDto = (verificationDto as? VerificationDto<T>)
+            if (castedVerificationDto == null) {
+                val verificationDtoJson = objectMapper.writeValueAsString(verificationDto)
+                castedVerificationDto = (objectMapper.readValue(verificationDtoJson, VerificationDto::class.java) as? VerificationDto<T>)
+                    ?: throw IllegalStateException("Wrong DTO in verification queue")
+            }
             unitTestingData.numberOfCastedVerificationBlocks += 1
 
             if (castedVerificationDto.nodeId == id) continue
@@ -238,7 +249,7 @@ open class Node<T>(
             server.sendObj(
                 VerificationResultDto(
                     blockHash = castedVerificationDto.block.currentHash,
-                    nodeId = verificationDto.nodeId,
+                    nodeId = castedVerificationDto.nodeId,
                     verificationResult = verifier.verifyBlock(castedVerificationDto.block, chain),
                     nodeInfo = NodeInfo(id = id, amount = amount),
                 ),
