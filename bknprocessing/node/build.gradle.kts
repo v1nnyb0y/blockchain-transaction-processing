@@ -13,6 +13,7 @@ dependencies {
     implementation("org.slf4j:slf4j-api:2.0.6")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
 }

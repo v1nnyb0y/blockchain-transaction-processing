@@ -11,5 +11,5 @@ data class VerificationResultDto(
     val blockHash: String,
     val nodeId: UUID,
     val nodeInfo: NodeInfo,
-    val verificationResult: Boolean,
+    val verificationResult: Boolean, // TODO rnm
 )

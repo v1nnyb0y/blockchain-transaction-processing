@@ -30,13 +30,12 @@ import com.bknprocessing.node.utils.startSmFinishProcess
 import com.bknprocessing.node.utils.startSmartContractListener
 import com.bknprocessing.node.utils.startVerifier
 import com.bknprocessing.node.utils.startVerify
-import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.slf4j.Logger
+import org.springframework.beans.factory.annotation.Autowired
 import java.util.UUID
 import kotlin.random.Random
 
@@ -54,10 +53,14 @@ open class Node<T>(
 ) : INode {
 
     val log: Logger by logger()
+
     protected enum class TopicsList {
         ObjQueue, VerificationBlockQueue, VerificationResultBlockQueue,
         StateChange,
     }
+
+    @Autowired
+    lateinit var objectMapper: ObjectMapper
 
     protected var nodeInfos: MutableMap<UUID, Int> = mutableMapOf()
     protected var chain: MutableList<Block<T>> = mutableListOf()
@@ -78,9 +81,6 @@ open class Node<T>(
 
     protected val miner: INodeMiner<T> = NodeMinerImpl(calculateHash, isMined)
     private val verifier: INodeVerifier<T> = NodeVerifierImpl(calculateHash, isMined)
-    private val objectMapper = ObjectMapper()
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        .registerModule(JavaTimeModule())
 
     init {
         if (index == 0) {
@@ -112,14 +112,23 @@ open class Node<T>(
             var data: Any?
 
             if (castedStateChangeDto == null) {
-                // for finish process only (can be removed for real project)
-                data = (stateChangeDto as? Int)
+                val verificationDtoJson = objectMapper.writeValueAsString(castedStateChangeDto)
+                log.info("RunVerifier VerificationDtoJson: $verificationDtoJson")
+                castedStateChangeDto =
+                    objectMapper.readValue(verificationDtoJson, StateChangeDto::class.java) as? StateChangeDto<T>
+                if (castedStateChangeDto == null) {
+                    // for finish process only (can be removed for real project)
+                    data = (stateChangeDto as? Int)
 
-                if (data == null) {
-                    data = (stateChangeDto as? UUID) ?: throw IllegalStateException("Wrong DTO in state change queue")
-                    action = StateAction.SET_NEW_MINER
+                    if (data == null) {
+                        data = (stateChangeDto as? UUID) ?: throw IllegalStateException("Wrong DTO in stateChange queue")
+                        action = StateAction.SET_NEW_MINER
+                    } else {
+                        action = StateAction.FINISH
+                    }
                 } else {
-                    action = StateAction.FINISH
+                    action = castedStateChangeDto.action
+                    data = castedStateChangeDto.data
                 }
             } else {
                 action = castedStateChangeDto.action
@@ -188,20 +197,27 @@ open class Node<T>(
                     delay(DELAY_MILSEC)
 
                     val verificationResult = client.getObj(TopicsList.VerificationResultBlockQueue.name) ?: continue
-                    val castedVerificationResult = (verificationResult as? VerificationResultDto) ?: throw IllegalStateException("Wrong DTO in verification result queue")
+                    var castedVerificationResultDto = (verificationResult as? VerificationResultDto)
+                    if (castedVerificationResultDto == null) {
+                        val verificationResultDtoJson = objectMapper.writeValueAsString(castedVerificationResultDto)
+                        log.info("RunVerifier VerificationDtoJson: $verificationResultDtoJson")
+                        castedVerificationResultDto =
+                            objectMapper.readValue(verificationResultDtoJson, VerificationResultDto::class.java)
+                                ?: throw IllegalStateException("Wrong DTO in verification result queue")
+                    }
 
-                    if (castedVerificationResult.blockHash == minedBlock.currentHash) {
+                    if (castedVerificationResultDto.blockHash == minedBlock.currentHash) {
                         unitTestingData.numberOfHandledVerificationResult += 1
                         countOfFinishedNodes += 1
 
-                        if (castedVerificationResult.verificationResult) {
+                        if (castedVerificationResultDto.verificationResult) {
                             countOfSuccessNodes += 1
                         }
 
-                        nodeInfos[castedVerificationResult.nodeInfo.id] = castedVerificationResult.nodeInfo.amount
+                        nodeInfos[castedVerificationResultDto.nodeInfo.id] = castedVerificationResultDto.nodeInfo.amount
                     } else {
                         server.sendObj(
-                            castedVerificationResult,
+                            castedVerificationResultDto,
                             TopicsList.VerificationResultBlockQueue.name,
                         )
                     }
@@ -236,8 +252,10 @@ open class Node<T>(
             var castedVerificationDto = (verificationDto as? VerificationDto<T>)
             if (castedVerificationDto == null) {
                 val verificationDtoJson = objectMapper.writeValueAsString(verificationDto)
-                castedVerificationDto = (objectMapper.readValue(verificationDtoJson, VerificationDto::class.java) as? VerificationDto<T>)
-                    ?: throw IllegalStateException("Wrong DTO in verification queue")
+                log.info("RunVerifier VerificationDtoJson: $verificationDtoJson")
+                castedVerificationDto =
+                    (objectMapper.readValue(verificationDtoJson, VerificationDto::class.java) as? VerificationDto<T>)
+                        ?: throw IllegalStateException("Wrong DTO in verification queue")
             }
             unitTestingData.numberOfCastedVerificationBlocks += 1
 
@@ -284,18 +302,21 @@ open class Node<T>(
         if (newBlock.currentHash == lastBlockHashInChain) return
         chain.add(newBlock)
     }
+
     protected fun handleRemoveUnhealthyBlocks(lastSuccessBlock: Block<T>) {
         log.startSmActualizeChain(isHealthy, index)
         while (lastSuccessBlock.currentHash != lastBlockHashInChain) {
             chain.removeLast()
         }
     }
+
     protected fun handleSetNewMiner(minerId: UUID) {
         isMiner = minerId == id
         if (isMiner) {
             log.setNewMiner(isHealthy, index)
         }
     }
+
     private suspend fun handleFinishNodeExperiment(transCount: Int) {
         log.startSmFinishProcess(isHealthy, index)
         while (chain.size != transCount + 1) { // + 1 cause of generic block
@@ -313,6 +334,7 @@ open class Node<T>(
             TopicsList.StateChange.name,
         )
     }
+
     private fun actualizeNetworkDueWrongVerification(lastSuccessBlock: Block<T>) {
         server.sendObj(
             StateChangeDto(
@@ -322,6 +344,7 @@ open class Node<T>(
             TopicsList.StateChange.name,
         )
     }
+
     private fun setNewMiner(minerId: UUID) {
         if (minerId == id) return
 
@@ -357,6 +380,7 @@ open class Node<T>(
             var numberOfHandledVerificationResult: Int = 0,
             var numberOfSuccessVerifiedObjs: Int = 0,
         )
+
         val unitTestingData = UnitTestingData()
     }
 }
