@@ -1,9 +1,10 @@
 package com.bknprocessing.app.service.upper.remoteupper
 
 import com.bknprocessing.app.service.upper.IUpper
-import com.bknprocessing.app.utils.constructedNode
 import com.bknprocessing.app.utils.logger
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.supervisorScope
 import org.slf4j.Logger
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.client.WebClient
@@ -16,21 +17,11 @@ abstract class RemoteUpper<T>(
 ) : IUpper<T> {
 
     val log: Logger by logger()
-    val nodes: MutableList<Boolean> = mutableListOf()
+    val nodes: MutableList<Any> = mutableListOf()
 
     private fun constructNodeCollection(count: Int, isHealthy: Boolean, createdAt: Long, networkSize: Int) = runBlocking {
         for (idx in 0 until count) {
-            val webClient = WebClient.create("http://localhost:${8080 + nodes.size}")
-            val response = webClient.post()
-                .uri("/init")
-                .bodyValue(
-                    getNodeConfiguration(networkSize, isHealthy, nodes.size, createdAt),
-                )
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .awaitBodilessEntity()
-            nodes.add(true)
-            log.constructedNode(isHealthy, nodes.size - 1)
+            nodes.add(getNodeConfiguration(networkSize, isHealthy, nodes.size, createdAt))
         }
     }
 
@@ -38,5 +29,20 @@ abstract class RemoteUpper<T>(
         val createdAt = Instant.now().toEpochMilli()
         constructNodeCollection(nodesCount - unhealthyNodesCount, true, createdAt, nodesCount)
         constructNodeCollection(unhealthyNodesCount, false, createdAt, nodesCount)
+
+        supervisorScope {
+            nodes.forEachIndexed { idx, conf ->
+                // log.constructedNode(, nodes.size - 1)
+                launch {
+                    val webClient = WebClient.create("http://localhost:${8080 + idx}")
+                    val response = webClient.post()
+                        .uri("/init")
+                        .bodyValue(conf)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .retrieve()
+                        .awaitBodilessEntity()
+                }
+            }
+        }
     }
 }

@@ -23,7 +23,7 @@ class NodeController(
     private val log: Logger by logger()
 
     @PostMapping("/init")
-    suspend fun init(@RequestBody starterConfig: StarterConfig) {
+    fun init(@RequestBody starterConfig: StarterConfig) {
         log.info("NodeController: init processed")
         nodeService.init(
             starterConfig.totalNodesCount,

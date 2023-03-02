@@ -1,6 +1,7 @@
 package com.bknprocessing.node.service
 
 import com.bknprocessing.common.data.Transaction
+import com.bknprocessing.common.globals.RestJsonServerConfiguration
 import com.bknprocessing.common.rest.RestClient
 import com.bknprocessing.common.rest.RestServer
 import com.bknprocessing.node.nodeimpl.INode
@@ -21,10 +22,11 @@ class NodeService {
     private lateinit var client: RestClient
     private lateinit var server: RestServer
 
-    suspend fun init(totalNodesCount: Int, isHealthy: Boolean, nodeIndex: Int, createdAt: Long) {
+    fun init(totalNodesCount: Int, isHealthy: Boolean, nodeIndex: Int, createdAt: Long) {
         client = RestClient.INSTANCE
         server = RestServer.INSTANCE
 
+        server.setup(RestJsonServerConfiguration(capacity = totalNodesCount))
         node = Node<Transaction>(
             index = nodeIndex,
             // isHealthy = nodeIndex < totalNodesCount - unhealthyNodesCount, // 2 < 7 - 3, 4 < 7 - 3
@@ -36,10 +38,12 @@ class NodeService {
             server = RestServer.INSTANCE,
         )
 
-        supervisorScope {
-            launch { node.runMiner() }
-            launch { node.runVerifier() }
-            launch { node.waitStateChangeAction() }
+        runBlocking {
+            supervisorScope {
+                launch { node.runMiner() }
+                launch { node.runVerifier() }
+                launch { node.waitStateChangeAction() }
+            }
         }
     }
 
