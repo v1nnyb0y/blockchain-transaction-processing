@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package com.bknprocessing.common.protoClasses;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/wrappers.proto";
+import "NodeInfoSubBlock.proto";
+
+option java_multiple_files = true;
+
+message Block {
+  google.protobuf.StringValue previousHash = 1;
+  NodeInfoSubBlock nodeInfo = 2;
+  google.protobuf.StringValue currentHash = 3;
+  google.protobuf.Int64Value timestamp = 4;
+  google.protobuf.Int64Value nonce = 5;
+  repeated google.protobuf.Any objs = 6;
+}

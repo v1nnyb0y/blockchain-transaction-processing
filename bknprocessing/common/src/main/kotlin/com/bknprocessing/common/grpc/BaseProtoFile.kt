@@ -2,7 +2,9 @@ package com.bknprocessing.common.grpc
 
 abstract class BaseProtoFile {
 
-    abstract fun toProto()
+    abstract fun toProto(): Any
+}
 
-    abstract fun fromProto()
+abstract class BaseProtoFileCompanion {
+    abstract fun fromProto(obj: Any): Any
 }

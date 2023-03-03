@@ -6,7 +6,7 @@ import com.bknprocessing.common.globals.TopicsList
 import java.util.LinkedList
 import java.util.Queue
 
-class RestClient private constructor() : IClient {
+open class RestClient internal constructor() : IClient {
 
     private val objQueue: Queue<Any> = LinkedList()
     private val verificationBlockQueue: Queue<Any> = LinkedList()

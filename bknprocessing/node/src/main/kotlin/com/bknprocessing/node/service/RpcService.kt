@@ -1,21 +1,19 @@
 package com.bknprocessing.node.service
 
-import com.bknprocessing.common.globals.RestJsonServerConfiguration
-import com.bknprocessing.common.rest.RestClient
-import com.bknprocessing.common.rest.RestServer
+import com.bknprocessing.common.grpc.RpcClient
+import com.bknprocessing.common.grpc.RpcServer
 import org.springframework.stereotype.Service
 
 @Service
-class NodeService : BaseService() {
+class RpcService : BaseService() {
 
-    private lateinit var client: RestClient
-    private lateinit var server: RestServer
+    private lateinit var client: RpcClient
+    private lateinit var server: RpcServer
 
     fun init(totalNodesCount: Int, isHealthy: Boolean, nodeIndex: Int, createdAt: Long) {
-        client = RestClient.INSTANCE
-        server = RestServer.INSTANCE
+        client = RpcClient.INSTANCE
+        server = RpcServer.INSTANCE
 
-        server.setup(RestJsonServerConfiguration(capacity = totalNodesCount))
         initNode(nodeIndex, isHealthy, createdAt, totalNodesCount, client, server)
     }
 

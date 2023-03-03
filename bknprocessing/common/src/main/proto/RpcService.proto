@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package com.bknprocessing.common.protoService;
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/any.proto";
+
+import "Block.proto";
+import "NodeInit.proto";
+import "StateChange.proto";
+import "Transaction.proto";
+import "Verification.proto";
+import "VerificationResult.proto";
+
+option java_multiple_files = true;
+
+service RpcService {
+  rpc initNode(com.bknprocessing.common.protoClasses.NodeInit) returns (google.protobuf.StringValue);
+  rpc verifyObj(com.bknprocessing.common.protoClasses.Transaction) returns (google.protobuf.StringValue);
+  rpc verify(com.bknprocessing.common.protoClasses.Verification) returns (google.protobuf.StringValue);
+  rpc verifyResult(com.bknprocessing.common.protoClasses.VerificationResult) returns (google.protobuf.StringValue);
+  rpc stateChange(com.bknprocessing.common.protoClasses.StateChange) returns (google.protobuf.StringValue);
+  rpc stateChangeInt(google.protobuf.Int32Value) returns (google.protobuf.StringValue);
+  rpc stateChangeUid(google.protobuf.StringValue) returns (google.protobuf.StringValue);
+}

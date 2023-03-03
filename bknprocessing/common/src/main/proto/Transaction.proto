@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package com.bknprocessing.common.protoClasses;
+
+import "google/protobuf/wrappers.proto";
+
+option java_multiple_files = true;
+
+message Transaction {
+  google.protobuf.StringValue id = 1;
+}

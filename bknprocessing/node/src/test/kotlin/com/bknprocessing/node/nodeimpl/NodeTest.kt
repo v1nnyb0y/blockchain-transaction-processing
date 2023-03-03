@@ -63,7 +63,8 @@ class NodeTest : AbstractTest<Node<Any>>(
 
             Assertions.assertTrue(it.getCalculatedHash(someBlock).isNotBlank())
             Assertions.assertEquals(
-                "$previousHash$objs$timestamp$nonce".hash(),
+                //"$previousHash$objs$timestamp$nonce".hash(),
+                "$previousHash$timestamp$nonce".hash(),
                 it.getCalculatedHash(someBlock),
             )
         }

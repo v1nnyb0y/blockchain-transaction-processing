@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package com.bknprocessing.common.protoClasses;
+
+import "Block.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_multiple_files = true;
+
+message StateChange {
+  Block data = 1;
+  google.protobuf.StringValue action = 2;
+}

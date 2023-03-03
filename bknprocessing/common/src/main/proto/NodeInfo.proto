@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package com.bknprocessing.common.protoClasses;
+
+import "google/protobuf/wrappers.proto";
+
+option java_multiple_files = true;
+
+message NodeInfo {
+  google.protobuf.StringValue id = 1;
+  google.protobuf.Int32Value amount = 2;
+}

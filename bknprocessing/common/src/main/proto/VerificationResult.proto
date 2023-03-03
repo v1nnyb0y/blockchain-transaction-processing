@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package com.bknprocessing.common.protoClasses;
+
+import "NodeInfo.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_multiple_files = true;
+
+message VerificationResult {
+  google.protobuf.StringValue blockHash = 1;
+  google.protobuf.StringValue nodeId = 2;
+  NodeInfo nodeInfo = 3;
+  google.protobuf.BoolValue verificationResult = 4;
+}

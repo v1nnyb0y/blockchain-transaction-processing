@@ -1,7 +1,0 @@
-syntax = "proto3";
-
-package com.bknprocessing.common.protoClasses;
-
-message Transaction {
-  string id = 1;
-}

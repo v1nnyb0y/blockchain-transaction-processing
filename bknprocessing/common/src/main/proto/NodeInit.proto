@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package com.bknprocessing.common.protoClasses;
+
+import "google/protobuf/wrappers.proto";
+
+option java_multiple_files = true;
+
+message NodeInit {
+  google.protobuf.BoolValue isHealthy = 1;
+  google.protobuf.Int32Value totalNodesCount = 2;
+  google.protobuf.Int32Value nodeIndex = 3;
+  google.protobuf.Int64Value createdAt = 4;
+}

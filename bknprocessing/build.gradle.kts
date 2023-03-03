@@ -23,7 +23,7 @@ subprojects {
     apply(plugin = "io.spring.dependency-management")
     apply(plugin = "kotlin")
 
-    apply(from = "$rootDir/gradle/ktlint.gradle.kts")
+    // apply(from = "$rootDir/gradle/ktlint.gradle.kts")
     apply(plugin = "io.gitlab.arturbosch.detekt")
 
     the<DependencyManagementExtension>().apply {
