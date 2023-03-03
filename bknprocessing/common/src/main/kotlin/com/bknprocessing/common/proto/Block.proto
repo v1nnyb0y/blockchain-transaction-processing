@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package com.bknprocessing.common.protoClasses;
+
+import "google/protobuf/any.proto";
+
+message NodeInfoSubBlock {
+  uint32 amount = 1;
+  uint32 index = 2;
+  string id = 3;
+}
+
+message Block {
+  string previousHash = 1;
+  optional NodeInfoSubBlock nodeInfo = 2;
+  string currentHash = 3;
+  uint64 timestamp = 4;
+  uint64 nonce = 5;
+  repeated google.protobuf.Any objs = 6;
+}

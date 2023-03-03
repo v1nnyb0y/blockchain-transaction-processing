@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package com.bknprocessing.common.protoClasses;
+
+message NodeInfo {
+  string id = 1;
+  uint32 amount = 2;
+}
+
+message VerificationResult {
+  string blockHash = 1;
+  string nodeId = 2;
+  NodeInfo nodeInfo = 3;
+  bool verificationResult = 4;
+}

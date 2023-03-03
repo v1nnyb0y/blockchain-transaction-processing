@@ -1,6 +1,6 @@
 package com.bknprocessing.app.service.upper.remoteupper
 
-class RestJsonRemoteUpper<T>(
+class RestRpcRemoteUpper<T>(
     getNodeConfiguration: (networkSize: Int, isHealthy: Boolean, nodeIndex: Int, createdAt: Long) -> Any =
         { networkSize: Int, isHealthy: Boolean, nodeIndex: Int, createdAt: Long ->
             NodeConfiguration(

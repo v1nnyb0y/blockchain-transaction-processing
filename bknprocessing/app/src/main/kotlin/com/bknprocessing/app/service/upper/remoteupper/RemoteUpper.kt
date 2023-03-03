@@ -11,6 +11,13 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.awaitBodyOrNull
 import java.time.Instant
 
+data class NodeConfiguration(
+    val totalNodesCount: Int,
+    val isHealthy: Boolean,
+    val nodeIndex: Int,
+    val createdAt: Long,
+)
+
 // TODO Vitalii for implementation (docker instances)
 abstract class RemoteUpper<T>(
     private val getNodeConfiguration: (networkSize: Int, isHealthy: Boolean, nodeIndex: Int, createdAt: Long) -> Any,

@@ -10,6 +10,8 @@ plugins {
     kotlin("plugin.spring") version "1.7.22" apply false
     id("io.gitlab.arturbosch.detekt") version "1.17.1" apply false
     id("com.asarkar.gradle.build-time-tracker") version "4.0.0" apply false
+
+    id("com.google.protobuf") version "0.9.2" apply false
 }
 
 allprojects {

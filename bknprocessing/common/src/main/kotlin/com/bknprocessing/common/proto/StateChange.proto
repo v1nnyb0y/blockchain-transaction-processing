@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package com.bknprocessing.common.protoClasses;
+
+import "com/bknprocessing/common/proto/Block.proto";
+
+message StateChange {
+  Block data = 1;
+  string action = 2;
+}
