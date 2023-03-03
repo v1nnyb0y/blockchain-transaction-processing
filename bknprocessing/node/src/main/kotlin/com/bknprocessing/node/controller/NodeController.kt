@@ -2,6 +2,7 @@ package com.bknprocessing.node.controller
 
 import com.bknprocessing.node.service.NodeService
 import com.bknprocessing.node.utils.logger
+import io.micrometer.core.annotation.Timed
 import org.slf4j.Logger
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -15,6 +16,7 @@ data class StarterConfig(
     val createdAt: Long,
 )
 
+@Timed
 @RestController
 class NodeController(
     private val nodeService: NodeService,
