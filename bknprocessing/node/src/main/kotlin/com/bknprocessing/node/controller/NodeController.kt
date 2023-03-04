@@ -3,6 +3,7 @@ package com.bknprocessing.node.controller
 import com.bknprocessing.node.service.NodeService
 import com.bknprocessing.node.utils.logger
 import io.micrometer.core.annotation.Timed
+import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import org.slf4j.Logger
 import org.springframework.web.bind.annotation.GetMapping
@@ -92,6 +93,7 @@ class NodeController(
     @Timed(description = "healthCheck_metric_timed", histogram = true)
     @GetMapping("/healthCheck")
     fun healthCheck(): String {
+        val test = Gauge.builder("TEMP_GAUGE.size", "12345.6789", String::toDouble).register(meterRegistry)
         val count = healthCheckGauge.count.incrementAndGet()
         healthCheckGauge.totalValue.addAndGet(modifyList[index].toLong())
         healthCheckGauge.avgValue.set((healthCheckGauge.totalValue.get()) / count)
