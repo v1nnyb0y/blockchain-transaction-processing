@@ -4,7 +4,6 @@ import com.bknprocessing.common.data.Transaction
 import com.bknprocessing.common.grpc.BaseProtoFile
 import com.bknprocessing.common.grpc.BaseProtoFileCompanion
 import com.bknprocessing.common.protoClasses.Block
-import com.bknprocessing.common.protoClasses.NodeInfoSubBlockKt
 import com.google.protobuf.Int32Value
 import com.google.protobuf.Int64Value
 import com.google.protobuf.StringValue
@@ -34,7 +33,7 @@ data class NodeInfoSubBlock(
             return NodeInfoSubBlock(
                 amount = info.amount.value,
                 index = info.index.value,
-                id = UUID.fromString(info.id.value)
+                id = UUID.fromString(info.id.value),
             )
         }
     }
@@ -64,10 +63,11 @@ data class Block<T>(
         builder.currentHash = StringValue.of(currentHash)
         builder.timestamp = Int64Value.of(timestamp)
         builder.nonce = Int64Value.of(nonce)
-        objs.forEach {
-            val anyPacked = com.google.protobuf.Any.pack((it as Transaction).toProto())
-            builder.objsBuilderList.add(anyPacked.toBuilder())
-        }
+        builder.addAllObjs(
+            objs.map {
+                com.google.protobuf.Any.pack((it as Transaction).toProto())
+            },
+        )
 
         return builder.build()
     }
@@ -85,8 +85,8 @@ data class Block<T>(
                 nonce = blck.nonce.value,
                 objs = blck.objsList.map {
                     val trans = it.unpack(com.bknprocessing.common.protoClasses.Transaction::class.java)
-                    return Transaction.fromProto(trans)
-                }.toMutableList()
+                    Transaction.fromProto(trans)
+                }.toMutableList(),
             )
         }
     }

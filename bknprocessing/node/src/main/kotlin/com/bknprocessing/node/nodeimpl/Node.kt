@@ -324,7 +324,7 @@ open class Node<T>(
     private suspend fun handleFinishNodeExperiment(transCount: Int) {
         log.startSmFinishProcess(isHealthy, index)
         while (chain.size != transCount + 1) { // + 1 cause of generic block
-            delay(DELAY_MILSEC)
+            delay(DELAY_MILSEC * 100)
         }
         isFinished = true
     }

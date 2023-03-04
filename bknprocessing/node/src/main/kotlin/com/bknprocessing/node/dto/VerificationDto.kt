@@ -24,9 +24,9 @@ data class VerificationDto<T>(
         override fun fromProto(obj: Any): Any {
             val verify = (obj as? Verification)
                 ?: throw IllegalStateException("Impossible to cast proto to class")
-            return VerificationDto<Any>(
+            return VerificationDto(
                 nodeId = UUID.fromString(verify.nodeId.value),
-                block = Block.fromProto(verify.block) as Block<Any>
+                block = Block.fromProto(verify.block) as Block<Any>,
             )
         }
     }

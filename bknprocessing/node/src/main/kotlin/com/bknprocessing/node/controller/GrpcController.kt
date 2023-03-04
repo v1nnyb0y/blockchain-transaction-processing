@@ -36,6 +36,7 @@ class GrpcController(
             )
         }
         responseObserver?.onNext(StringValue.of("Ok"))
+        responseObserver?.onCompleted()
     }
 
     override fun verifyObj(request: Transaction?, responseObserver: StreamObserver<StringValue>?) {
@@ -44,6 +45,7 @@ class GrpcController(
             rpcService.verifyObj(com.bknprocessing.common.data.Transaction.fromProto(request))
         }
         responseObserver?.onNext(StringValue.of("Ok"))
+        responseObserver?.onCompleted()
     }
 
     override fun verify(request: Verification?, responseObserver: StreamObserver<StringValue>?) {
@@ -52,6 +54,7 @@ class GrpcController(
             rpcService.verify(VerificationDto.fromProto(request))
         }
         responseObserver?.onNext(StringValue.of("Ok"))
+        responseObserver?.onCompleted()
     }
 
     override fun verifyResult(request: VerificationResult?, responseObserver: StreamObserver<StringValue>?) {
@@ -60,6 +63,7 @@ class GrpcController(
             rpcService.verifyResult(VerificationResultDto.fromProto(request))
         }
         responseObserver?.onNext(StringValue.of("Ok"))
+        responseObserver?.onCompleted()
     }
 
     override fun stateChange(request: StateChange?, responseObserver: StreamObserver<StringValue>?) {
@@ -68,21 +72,24 @@ class GrpcController(
             rpcService.smartContract(StateChangeDto.fromProto(request))
         }
         responseObserver?.onNext(StringValue.of("Ok"))
+        responseObserver?.onCompleted()
     }
 
     override fun stateChangeInt(request: Int32Value?, responseObserver: StreamObserver<StringValue>?) {
-        log.info("GrpcController: smartContract processed")
+        log.info("GrpcController: smartContractInt processed")
         if (request != null) {
             rpcService.smartContract(request.value)
         }
         responseObserver?.onNext(StringValue.of("Ok"))
+        responseObserver?.onCompleted()
     }
 
     override fun stateChangeUid(request: StringValue?, responseObserver: StreamObserver<StringValue>?) {
-        log.info("GrpcController: smartContract processed")
+        log.info("GrpcController: smartContractUid processed")
         if (request != null) {
             rpcService.smartContract(UUID.fromString(request.value))
         }
         responseObserver?.onNext(StringValue.of("Ok"))
+        responseObserver?.onCompleted()
     }
 }

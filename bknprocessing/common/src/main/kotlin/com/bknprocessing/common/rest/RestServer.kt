@@ -52,7 +52,7 @@ class RestServer private constructor() : IServer {
     }
 
     suspend fun initNode(idx: Int, conf: Any): String? {
-        val webClient = WebClient.create("http://localhost:${8080 + idx}")
+        val webClient = WebClient.create("http://localhost:${PORT + idx}")
         return webClient.post()
             .uri("/init")
             .bodyValue(conf)
@@ -62,7 +62,7 @@ class RestServer private constructor() : IServer {
     }
 
     private fun sendRequest(endPointConnectionString: String, nodeIndex: Int, data: Any) = runBlocking {
-        val webClient = WebClient.create("http://localhost:${8080 + nodeIndex}")
+        val webClient = WebClient.create("http://localhost:${PORT + nodeIndex}")
         webClient.post()
             .uri("/$endPointConnectionString")
             .bodyValue(data)
@@ -81,5 +81,6 @@ class RestServer private constructor() : IServer {
 
     companion object {
         val INSTANCE = RestServer()
+        val PORT = 8080
     }
 }

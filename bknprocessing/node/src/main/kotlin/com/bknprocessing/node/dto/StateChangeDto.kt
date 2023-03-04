@@ -30,7 +30,7 @@ data class StateChangeDto<T>(
                 ?: throw IllegalStateException("Impossible to cast proto to class")
             return StateChangeDto(
                 data = Block.fromProto(sc.data) as Block<Any>,
-                action = StateAction.valueOf(sc.action.value)
+                action = StateAction.valueOf(sc.action.value),
             )
         }
     }

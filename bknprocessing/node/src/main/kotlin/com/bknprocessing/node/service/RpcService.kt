@@ -1,5 +1,6 @@
 package com.bknprocessing.node.service
 
+import com.bknprocessing.common.globals.RpcServerConfiguration
 import com.bknprocessing.common.grpc.RpcClient
 import com.bknprocessing.common.grpc.RpcServer
 import org.springframework.stereotype.Service
@@ -14,6 +15,7 @@ class RpcService : BaseService() {
         client = RpcClient.INSTANCE
         server = RpcServer.INSTANCE
 
+        server.setup(RpcServerConfiguration(capacity = totalNodesCount))
         initNode(nodeIndex, isHealthy, createdAt, totalNodesCount, client, server)
     }
 

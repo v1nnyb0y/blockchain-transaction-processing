@@ -2,6 +2,8 @@ package com.bknprocessing.app.service.upper.remoteupper
 
 import com.bknprocessing.app.service.upper.IUpper
 import com.bknprocessing.app.utils.logger
+import com.bknprocessing.common.IServer
+import com.bknprocessing.common.globals.ServerConfiguration
 import com.bknprocessing.common.grpc.BaseProtoFile
 import com.bknprocessing.common.grpc.BaseProtoFileCompanion
 import com.bknprocessing.common.protoClasses.NodeInit
@@ -50,6 +52,8 @@ data class NodeConfiguration(
 abstract class RemoteUpper<T>(
     private val getNodeConfiguration: (networkSize: Int, isHealthy: Boolean, nodeIndex: Int, createdAt: Long) -> NodeConfiguration,
     private val startNode: suspend (idx: Int, conf: NodeConfiguration) -> String?,
+    private val server: IServer,
+    private val getServerConfiguration: (networkSize: Int) -> ServerConfiguration,
 ) : IUpper<T> {
 
     val log: Logger by logger()
@@ -66,6 +70,7 @@ abstract class RemoteUpper<T>(
         constructNodeCollection(nodesCount - unhealthyNodesCount, true, createdAt, nodesCount)
         constructNodeCollection(unhealthyNodesCount, false, createdAt, nodesCount)
 
+        server.setup(getServerConfiguration(nodesCount))
         supervisorScope {
             nodes.forEachIndexed { idx, conf ->
                 // log.constructedNode(, nodes.size - 1)

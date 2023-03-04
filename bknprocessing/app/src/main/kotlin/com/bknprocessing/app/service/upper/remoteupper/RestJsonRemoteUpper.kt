@@ -1,5 +1,7 @@
 package com.bknprocessing.app.service.upper.remoteupper
 
+import com.bknprocessing.common.globals.RestJsonServerConfiguration
+import com.bknprocessing.common.globals.ServerConfiguration
 import com.bknprocessing.common.rest.RestServer
 
 class RestJsonRemoteUpper<T>(
@@ -16,4 +18,8 @@ class RestJsonRemoteUpper<T>(
         { idx: Int, conf: NodeConfiguration ->
             RestServer.INSTANCE.initNode(idx, conf)
         },
-) : RemoteUpper<T>(getNodeConfiguration, startNode)
+    getServerConfiguration: (networkSize: Int) -> ServerConfiguration =
+        { networkSize: Int ->
+            RestJsonServerConfiguration(capacity = networkSize)
+        },
+) : RemoteUpper<T>(getNodeConfiguration, startNode, RestServer.INSTANCE, getServerConfiguration)

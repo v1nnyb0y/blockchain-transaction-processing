@@ -20,6 +20,7 @@ dependencies {
 
     implementation("com.google.protobuf:protobuf-kotlin:3.22.0")
     implementation("net.devh:grpc-client-spring-boot-starter:2.14.0.RELEASE")
+    implementation("net.devh:grpc-server-spring-boot-starter:2.14.0.RELEASE")
 
     protobuf(files("/proto"))
 

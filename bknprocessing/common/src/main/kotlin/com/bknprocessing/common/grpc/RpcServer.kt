@@ -42,18 +42,21 @@ class RpcServer private constructor() : IServer {
         }
     }
 
-    fun initNode(idx: Int, conf: BaseProtoFile): String? {
-        val stub = buildStub(port = 8080 + idx)
+    fun initNode(idx: Int, conf: BaseProtoFile): String {
+        val channel = ManagedChannelBuilder.forAddress("localhost", PORT + idx)
+            .usePlaintext()
+            .build()
+        val stub = RpcServiceGrpc.newFutureStub(channel)
 
         val request = (conf.toProto() as? NodeInit)
             ?: throw IllegalStateException("Impossible to cast class to proto")
         val response = stub.initNode(request)
 
-        return response.value
+        return "Ok"
     }
 
     private fun sendToObjQueue(element: BaseProtoFile): Boolean {
-        val stub = buildStub(port = 8080)
+        val stub = buildStub(port = PORT)
 
         val request = (element.toProto() as? Transaction)
             ?: throw IllegalStateException("Impossible to cast class to proto")
@@ -64,7 +67,7 @@ class RpcServer private constructor() : IServer {
 
     private fun sendToVerificationQueue(element: BaseProtoFile): Boolean {
         return (1 until networkSize).map {
-            val stub = buildStub(port = 8080 + it)
+            val stub = buildStub(port = PORT + it)
 
             val request = (element.toProto() as? Verification)
                 ?: throw IllegalStateException("Impossible to cast class to proto")
@@ -75,7 +78,7 @@ class RpcServer private constructor() : IServer {
     }
 
     private fun sendToVerificationResultQueue(element: BaseProtoFile): Boolean {
-        val stub = buildStub(port = 8080)
+        val stub = buildStub(port = PORT)
 
         val request = (element.toProto() as? VerificationResult)
             ?: throw IllegalStateException("Impossible to cast class to proto")
@@ -88,17 +91,20 @@ class RpcServer private constructor() : IServer {
         return when (element) {
             is Int -> {
                 (0 until networkSize).map {
-                    val stub = buildStub(port = 8080 + it)
+                    val channel = ManagedChannelBuilder.forAddress("localhost", PORT + it)
+                        .usePlaintext()
+                        .build()
+                    val stub = RpcServiceGrpc.newFutureStub(channel)
 
                     val request = Int32Value.of(element)
                     val response = stub.stateChangeInt(request)
 
-                    response.value.isNotEmpty()
+                    true
                 }.all { true }
             }
             is UUID -> {
                 (0 until networkSize).map {
-                    val stub = buildStub(port = 8080 + it)
+                    val stub = buildStub(port = PORT + it)
 
                     val request = StringValue.of(element.toString())
                     val response = stub.stateChangeUid(request)
@@ -108,7 +114,7 @@ class RpcServer private constructor() : IServer {
             }
             is BaseProtoFile -> {
                 (0 until networkSize).map {
-                    val stub = buildStub(8080 + it)
+                    val stub = buildStub(port = PORT + it)
 
                     val request = (element.toProto() as? StateChange)
                         ?: throw IllegalStateException("Impossible to cast class to proto")
@@ -130,5 +136,6 @@ class RpcServer private constructor() : IServer {
 
     companion object {
         val INSTANCE = RpcServer()
+        val PORT = 9090
     }
 }
