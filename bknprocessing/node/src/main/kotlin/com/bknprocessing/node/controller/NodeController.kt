@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
 data class StarterConfig(
@@ -25,6 +26,8 @@ class NodeController(
 ) {
 
     private val log: Logger by logger()
+    var healthCheckAvg: AtomicLong = meterRegistry.gauge("health_check_avg", AtomicLong(0))!!
+    var verifyObjMetricGauge: AtomicLong = meterRegistry.gauge("verify_obj_metric_gauge", AtomicLong(0))!!
 
     @PostMapping("/init")
     fun init(@RequestBody starterConfig: StarterConfig): String {
@@ -44,7 +47,7 @@ class NodeController(
         log.info("NodeController: verifyObj processed")
         measureTimeMillis {
             nodeService.verifyObj(obj)
-        }.also { meterRegistry.gauge("verify_obj_metric_gauge", it) }
+        }.also { verifyObjMetricGauge.set(it) }
     }
 
     @PostMapping("/verify")
@@ -65,10 +68,13 @@ class NodeController(
         nodeService.smartContract(obj)
     }
 
+    var modifyList = mutableListOf<Int>(25, 50, 75)
+
     @Timed(description = "healthCheck_metric_timed", histogram = true)
     @GetMapping("/healthCheck")
     fun healthCheck(): String {
-        meterRegistry.gauge("healthCheck_avg", 123)
+        healthCheckAvg.set(modifyList[0].toLong())
+        modifyList.removeAt(0)
         return "Ok"
     }
 }
