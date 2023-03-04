@@ -28,13 +28,15 @@ class NodeController(
 
     private val log: Logger by logger()
 
-    var healthCheckGauge: AvgValue = AvgValue(
-        value = meterRegistry.gauge("health_check_gauge_val", AtomicLong(0))!!,
-        count = meterRegistry.gauge("health_check_gauge_count", AtomicInteger(0))!!,
+    var healthCheckGauge: CustomMetrics = CustomMetrics(
+        totalValue = meterRegistry.gauge("health_check_gauge_total_val", AtomicLong(0))!!,
+        avgValue = meterRegistry.gauge("health_check_gauge_avg_val", AtomicLong(0))!!,
+        count = meterRegistry.gauge("health_check_gauge_count", AtomicInteger(0))!!, // TODO counter metric
     )
-    var verifyObjMetricAvg: AvgValue = AvgValue(
-        value = meterRegistry.gauge("verify_obj_gauge_val", AtomicLong(0))!!,
-        count = meterRegistry.gauge("verify_obj_gauge_count", AtomicInteger(0))!!,
+    var verifyObjMetricAvg: CustomMetrics = CustomMetrics(
+        totalValue = meterRegistry.gauge("verify_obj_gauge_total_val", AtomicLong(0))!!,
+        avgValue = meterRegistry.gauge("verify_obj_gauge_avg_val", AtomicLong(0))!!,
+        count = meterRegistry.gauge("verify_obj_gauge_count", AtomicInteger(0))!!, // TODO counter metric
     )
 
     @PostMapping("/init")
@@ -58,9 +60,11 @@ class NodeController(
         }.also {
             val oldCount = verifyObjMetricAvg.count.getAndIncrement()
             if (oldCount == 0) {
-                verifyObjMetricAvg.value.set((verifyObjMetricAvg.value.get() + it) / 1)
+                verifyObjMetricAvg.totalValue.addAndGet(it)
+                verifyObjMetricAvg.avgValue.set((verifyObjMetricAvg.totalValue.get() + it) / 1)
             } else {
-                verifyObjMetricAvg.value.set((verifyObjMetricAvg.value.get() + it) / oldCount)
+                verifyObjMetricAvg.totalValue.addAndGet(it)
+                verifyObjMetricAvg.avgValue.set((verifyObjMetricAvg.totalValue.get()) / oldCount)
             }
         }
     }
@@ -84,21 +88,17 @@ class NodeController(
     }
 
     var index = 0
-    var modifyList = mutableListOf(25, 50, 75, 100, 0, 0)
-    // 25  37  50  62  50  41
-
+    var modifyList = mutableListOf(25, 50, 75, 100, 0, 0) // 25, 37, 50, 62, 50, 41
     @Timed(description = "healthCheck_metric_timed", histogram = true)
     @GetMapping("/healthCheck")
     fun healthCheck(): String {
-        val oldCount = healthCheckGauge.count.getAndIncrement()
-        log.info("OldCount: $oldCount, healthCheckGauge.value: ${healthCheckGauge.value}")
-        if (oldCount == 0) {
-            healthCheckGauge.value.set((healthCheckGauge.value.get() + modifyList[0] + modifyList[index]) / 1)
-        } else {
-            healthCheckGauge.value.set((modifyList[0].toLong() + modifyList[index++]) / oldCount)
-        }
+        val count = healthCheckGauge.count.incrementAndGet()
+        healthCheckGauge.totalValue.addAndGet(modifyList[index].toLong())
+        healthCheckGauge.avgValue.set((healthCheckGauge.totalValue.get()) / count)
+        log.info("After: hsCount: ${healthCheckGauge.count}, hsAvg: ${healthCheckGauge.avgValue}, hsTotal: ${healthCheckGauge.totalValue}")
+        index++
         return "Ok"
     }
 }
 
-data class AvgValue(val value: AtomicLong, val count: AtomicInteger)
+data class CustomMetrics(val totalValue: AtomicLong, val avgValue: AtomicLong, val count: AtomicInteger)
