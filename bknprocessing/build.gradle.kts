@@ -1,7 +1,6 @@
 import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 // import io.gitlab.arturbosch.detekt.Detekt
-// import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
     id("org.springframework.boot") version "2.7.5" apply false
@@ -62,7 +61,7 @@ subprojects {
     }
     */
 
-    /*
+    /* TODO revert commit
     tasks.withType<Detekt> {
         exclude("resources/")
         exclude("build/")

@@ -28,7 +28,7 @@ data class NodeInfo(
                 ?: throw IllegalStateException("Impossible to cast proto to class")
             return NodeInfo(
                 id = UUID.fromString(info.id.value),
-                amount = info.amount.value
+                amount = info.amount.value,
             )
         }
     }
@@ -60,7 +60,7 @@ data class VerificationResultDto(
                 blockHash = res.blockHash.value,
                 nodeId = UUID.fromString(res.nodeId.value),
                 nodeInfo = NodeInfo.fromProto(res.nodeInfo) as NodeInfo,
-                verificationResult = res.verificationResult.value
+                verificationResult = res.verificationResult.value,
             )
         }
     }
