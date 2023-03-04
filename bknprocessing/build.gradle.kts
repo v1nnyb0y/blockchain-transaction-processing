@@ -1,6 +1,6 @@
-import io.gitlab.arturbosch.detekt.Detekt
 import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+// import io.gitlab.arturbosch.detekt.Detekt
 // import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
@@ -24,7 +24,7 @@ subprojects {
     apply(plugin = "kotlin")
 
     // apply(from = "$rootDir/gradle/ktlint.gradle.kts")
-    apply(plugin = "io.gitlab.arturbosch.detekt")
+    // apply(plugin = "io.gitlab.arturbosch.detekt")
 
     the<DependencyManagementExtension>().apply {
         imports {
@@ -62,9 +62,11 @@ subprojects {
     }
     */
 
+    /*
     tasks.withType<Detekt> {
         exclude("resources/")
         exclude("build/")
         config.setFrom(files("$rootDir/gradle/detekt-config.yml"))
     }
+     */
 }

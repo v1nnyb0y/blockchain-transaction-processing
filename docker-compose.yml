@@ -2,10 +2,10 @@ version: '3.9'
 
 services:
   node:
-    image: node
-    #    build:
-    #      context: ./bknprocessing
-    #      dockerfile: node.Dockerfile
+    #image: node
+    build:
+      context: ./bknprocessing
+      dockerfile: node.Dockerfile
     container_name: node
     ports:
       - "8080:8080"
@@ -22,7 +22,7 @@ services:
     depends_on:
       - node
     volumes:
-      - ./configuration/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./configuration/prometheus.yml:/etc/prometheus/prometheus.yml
 
   grafana:
     container_name: bknprocessing_grafana
