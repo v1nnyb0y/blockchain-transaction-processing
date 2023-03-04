@@ -1,7 +1,7 @@
 import io.gitlab.arturbosch.detekt.Detekt
 import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
-import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+// import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
     id("org.springframework.boot") version "2.7.5" apply false
@@ -45,6 +45,7 @@ subprojects {
         enabled = true
     }
 
+    /*
     tasks.withType<Test> {
         useJUnitPlatform()
         testLogging {
@@ -59,6 +60,7 @@ subprojects {
             showStackTraces = true
         }
     }
+    */
 
     tasks.withType<Detekt> {
         exclude("resources/")

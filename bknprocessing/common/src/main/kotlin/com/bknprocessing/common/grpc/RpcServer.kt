@@ -50,7 +50,7 @@ class RpcServer private constructor() : IServer {
 
         val request = (conf.toProto() as? NodeInit)
             ?: throw IllegalStateException("Impossible to cast class to proto")
-        val response = stub.initNode(request)
+        stub.initNode(request)
 
         return "Ok"
     }
@@ -97,7 +97,7 @@ class RpcServer private constructor() : IServer {
                     val stub = RpcServiceGrpc.newFutureStub(channel)
 
                     val request = Int32Value.of(element)
-                    val response = stub.stateChangeInt(request)
+                    stub.stateChangeInt(request)
 
                     true
                 }.all { true }
@@ -136,6 +136,6 @@ class RpcServer private constructor() : IServer {
 
     companion object {
         val INSTANCE = RpcServer()
-        val PORT = 9090
+        const val PORT = 3010
     }
 }
