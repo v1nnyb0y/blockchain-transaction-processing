@@ -16,6 +16,7 @@ import com.google.protobuf.StringValue
 import io.grpc.stub.StreamObserver
 import net.devh.boot.grpc.server.service.GrpcService
 import org.slf4j.Logger
+import java.util.UUID
 
 @GrpcService
 class GrpcController(
@@ -80,7 +81,7 @@ class GrpcController(
     override fun stateChangeUid(request: StringValue?, responseObserver: StreamObserver<StringValue>?) {
         log.info("GrpcController: smartContract processed")
         if (request != null) {
-            rpcService.smartContract(request.value)
+            rpcService.smartContract(UUID.fromString(request.value))
         }
         responseObserver?.onNext(StringValue.of("Ok"))
     }
