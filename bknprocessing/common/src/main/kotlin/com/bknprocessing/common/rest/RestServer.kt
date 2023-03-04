@@ -8,6 +8,7 @@ import kotlinx.coroutines.runBlocking
 import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.awaitBodilessEntity
+import org.springframework.web.reactive.function.client.awaitBodyOrNull
 
 class RestServer private constructor() : IServer {
 
@@ -48,6 +49,16 @@ class RestServer private constructor() : IServer {
             sendRequest(endPointConnectionString, it, element)
         }
         return true
+    }
+
+    suspend fun initNode(idx: Int, conf: Any): String? {
+        val webClient = WebClient.create("http://localhost:${8080 + idx}")
+        return webClient.post()
+            .uri("/init")
+            .bodyValue(conf)
+            .accept(APPLICATION_JSON)
+            .retrieve()
+            .awaitBodyOrNull()
     }
 
     private fun sendRequest(endPointConnectionString: String, nodeIndex: Int, data: Any) = runBlocking {

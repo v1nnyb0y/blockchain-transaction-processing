@@ -5,6 +5,7 @@ plugins {
     id("io.spring.dependency-management")
     kotlin("jvm")
     kotlin("plugin.spring")
+    id("com.google.protobuf")
 }
 
 repositories {
@@ -14,6 +15,8 @@ repositories {
 dependencies {
     implementation(project(":node"))
     implementation(project(":common"))
+
+    implementation("net.devh:grpc-server-spring-boot-starter:2.14.0.RELEASE")
 
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")

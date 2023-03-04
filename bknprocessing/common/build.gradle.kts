@@ -1,6 +1,4 @@
-import com.google.protobuf.gradle.*
-
-// ktlint-disable no-wildcard-imports
+import com.google.protobuf.gradle.* // ktlint-disable no-wildcard-imports
 
 group = "com.bknprocessing.common"
 
@@ -64,7 +62,7 @@ sourceSets {
         java {
             srcDirs(
                 "$buildDir/generated/proto/main/grpc",
-                "$buildDir/generated/proto/main/kotlin"
+                "$buildDir/generated/proto/main/kotlin",
             )
         }
     }

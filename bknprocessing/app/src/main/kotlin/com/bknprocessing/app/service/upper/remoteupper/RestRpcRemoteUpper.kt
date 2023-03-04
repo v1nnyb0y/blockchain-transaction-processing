@@ -1,7 +1,10 @@
 package com.bknprocessing.app.service.upper.remoteupper
 
+import com.bknprocessing.common.grpc.BaseProtoFile
+import com.bknprocessing.common.grpc.RpcServer
+
 class RestRpcRemoteUpper<T>(
-    getNodeConfiguration: (networkSize: Int, isHealthy: Boolean, nodeIndex: Int, createdAt: Long) -> Any =
+    getNodeConfiguration: (networkSize: Int, isHealthy: Boolean, nodeIndex: Int, createdAt: Long) -> NodeConfiguration =
         { networkSize: Int, isHealthy: Boolean, nodeIndex: Int, createdAt: Long ->
             NodeConfiguration(
                 totalNodesCount = networkSize,
@@ -10,4 +13,8 @@ class RestRpcRemoteUpper<T>(
                 createdAt = createdAt,
             )
         },
-) : RemoteUpper<T>(getNodeConfiguration)
+    startNode: suspend (idx: Int, conf: NodeConfiguration) -> String? =
+        { idx: Int, conf: NodeConfiguration ->
+            RpcServer.INSTANCE.initNode(idx, conf as BaseProtoFile)
+        },
+) : RemoteUpper<T>(getNodeConfiguration, startNode)

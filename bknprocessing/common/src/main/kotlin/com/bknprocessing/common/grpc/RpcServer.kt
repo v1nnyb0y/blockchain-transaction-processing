@@ -4,6 +4,7 @@ import com.bknprocessing.common.IServer
 import com.bknprocessing.common.globals.RpcServerConfiguration
 import com.bknprocessing.common.globals.ServerConfiguration
 import com.bknprocessing.common.globals.TopicsList
+import com.bknprocessing.common.protoClasses.NodeInit
 import com.bknprocessing.common.protoClasses.StateChange
 import com.bknprocessing.common.protoClasses.Transaction
 import com.bknprocessing.common.protoClasses.Verification
@@ -41,8 +42,18 @@ class RpcServer private constructor() : IServer {
         }
     }
 
+    fun initNode(idx: Int, conf: BaseProtoFile): String? {
+        val stub = buildStub(port = 8080 + idx)
+
+        val request = (conf.toProto() as? NodeInit)
+            ?: throw IllegalStateException("Impossible to cast class to proto")
+        val response = stub.initNode(request)
+
+        return response.value
+    }
+
     private fun sendToObjQueue(element: BaseProtoFile): Boolean {
-        val stub = buildStub(8080)
+        val stub = buildStub(port = 8080)
 
         val request = (element.toProto() as? Transaction)
             ?: throw IllegalStateException("Impossible to cast class to proto")
@@ -53,7 +64,7 @@ class RpcServer private constructor() : IServer {
 
     private fun sendToVerificationQueue(element: BaseProtoFile): Boolean {
         return (1 until networkSize).map {
-            val stub = buildStub(8080 + it)
+            val stub = buildStub(port = 8080 + it)
 
             val request = (element.toProto() as? Verification)
                 ?: throw IllegalStateException("Impossible to cast class to proto")
@@ -64,7 +75,7 @@ class RpcServer private constructor() : IServer {
     }
 
     private fun sendToVerificationResultQueue(element: BaseProtoFile): Boolean {
-        val stub = buildStub(8080)
+        val stub = buildStub(port = 8080)
 
         val request = (element.toProto() as? VerificationResult)
             ?: throw IllegalStateException("Impossible to cast class to proto")
@@ -77,7 +88,7 @@ class RpcServer private constructor() : IServer {
         return when (element) {
             is Int -> {
                 (0 until networkSize).map {
-                    val stub = buildStub(8080 + it)
+                    val stub = buildStub(port = 8080 + it)
 
                     val request = Int32Value.of(element)
                     val response = stub.stateChangeInt(request)
@@ -87,7 +98,7 @@ class RpcServer private constructor() : IServer {
             }
             is UUID -> {
                 (0 until networkSize).map {
-                    val stub = buildStub(8080 + it)
+                    val stub = buildStub(port = 8080 + it)
 
                     val request = StringValue.of(element.toString())
                     val response = stub.stateChangeUid(request)
