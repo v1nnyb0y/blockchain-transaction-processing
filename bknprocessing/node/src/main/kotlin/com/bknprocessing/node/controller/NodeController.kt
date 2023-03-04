@@ -3,6 +3,7 @@ package com.bknprocessing.node.controller
 import com.bknprocessing.node.service.NodeService
 import com.bknprocessing.node.utils.logger
 import io.micrometer.core.annotation.Timed
+import io.micrometer.core.instrument.MeterRegistry
 import org.slf4j.Logger
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -16,10 +17,10 @@ data class StarterConfig(
     val createdAt: Long,
 )
 
-@Timed
 @RestController
 class NodeController(
     private val nodeService: NodeService,
+    private val meterRegistry: MeterRegistry,
 ) {
 
     private val log: Logger by logger()
@@ -60,7 +61,10 @@ class NodeController(
         nodeService.smartContract(obj)
     }
 
+    @Timed(description = "Time spent healthCheck", histogram = true)
     @GetMapping("/healthCheck")
-    fun healthCheck() {
+    fun healthCheck(): String {
+        meterRegistry.gauge("VERIFICATION_AVG", 123)
+        return "Ok"
     }
 }
