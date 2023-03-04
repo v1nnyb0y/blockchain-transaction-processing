@@ -23,3 +23,7 @@ open class KafkaClientConfiguration(
 data class RestJsonServerConfiguration(
     val capacity: Int,
 ) : ServerConfiguration()
+
+data class RpcServerConfiguration(
+    val capacity: Int,
+) : ServerConfiguration()

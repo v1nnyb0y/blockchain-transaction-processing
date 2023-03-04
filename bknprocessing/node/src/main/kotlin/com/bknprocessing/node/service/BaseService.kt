@@ -22,7 +22,7 @@ abstract class BaseService {
         createdAt: Long,
         totalNodesCount: Int,
         client: IClient,
-        server: IServer
+        server: IServer,
     ) {
         val node: INode = Node<Transaction>(
             index = nodeIndex,

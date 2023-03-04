@@ -20,7 +20,7 @@ import java.util.UUID
 
 @GrpcService
 class GrpcController(
-    private val rpcService: RpcService
+    private val rpcService: RpcService,
 ) : RpcServiceGrpc.RpcServiceImplBase() {
 
     private val log: Logger by logger()
