@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import kotlin.system.measureTimeMillis
 
 data class StarterConfig(
     val totalNodesCount: Int,
@@ -37,10 +38,13 @@ class NodeController(
         return "Ok"
     }
 
+    @Timed(description = "verify_obj_metric_timed", histogram = true)
     @PostMapping("/verifyObj")
     fun verifyObj(@RequestBody obj: Any) {
         log.info("NodeController: verifyObj processed")
-        nodeService.verifyObj(obj)
+        measureTimeMillis {
+            nodeService.verifyObj(obj)
+        }.also { meterRegistry.gauge("verify_obj_metric_gauge", it) }
     }
 
     @PostMapping("/verify")
@@ -61,10 +65,10 @@ class NodeController(
         nodeService.smartContract(obj)
     }
 
-    @Timed(description = "Time spent healthCheck", histogram = true)
+    @Timed(description = "healthCheck_metric_timed", histogram = true)
     @GetMapping("/healthCheck")
     fun healthCheck(): String {
-        meterRegistry.gauge("VERIFICATION_AVG", 123)
+        meterRegistry.gauge("healthCheck_avg", 123)
         return "Ok"
     }
 }
