@@ -14,5 +14,6 @@ message Block {
   google.protobuf.StringValue currentHash = 3;
   google.protobuf.Int64Value timestamp = 4;
   google.protobuf.Int64Value nonce = 5;
-  repeated google.protobuf.Any objs = 6;
+  google.protobuf.Int64Value processingTime = 6;
+  repeated google.protobuf.Any objs = 7;
 }

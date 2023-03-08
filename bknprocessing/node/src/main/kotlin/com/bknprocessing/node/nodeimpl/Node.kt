@@ -37,6 +37,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.slf4j.Logger
+import java.time.Instant
 import java.util.UUID
 import kotlin.random.Random
 
@@ -100,6 +101,7 @@ open class Node<T>(
                 previousHash = "",
                 timestamp = createdAt,
                 nodeInfo = null,
+                processingTime = 0,
             ),
         )!!
         chain.add(block)
@@ -229,6 +231,7 @@ open class Node<T>(
 
                 amount += 1
                 nodeInfos[id] = amount
+                minedBlock.processingTime = Instant.now().toEpochMilli() - minedBlock.processingTime
                 if (countOfSuccessNodes / (networkSize - 1) - 0.8 >= EPSILON) {
                     unitTestingData.numberOfSuccessVerifiedObjs += 1
                     chain.add(minedBlock)
@@ -303,7 +306,9 @@ open class Node<T>(
 
     protected fun handleAcceptNewBlock(newBlock: Block<T>) {
         log.startSmAcceptNewBlock(isHealthy, index)
-        if (newBlock.currentHash == lastBlockHashInChain) return
+        if (newBlock.currentHash == lastBlockHashInChain) {
+            chain.last().processingTime = newBlock.processingTime
+        }
         chain.add(newBlock)
     }
 

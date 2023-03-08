@@ -40,7 +40,7 @@ class NodeMinerImplTest : AbstractTest<NodeMinerImpl<Any>>(
     @Test
     fun `calculate hash and set hash_correctness`() {
         allNodesMinerImpl.forEachIndexed { ind, it ->
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null)
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0)
             val newBlock = it.getCalculationAndSettingHash(someBlock.copy())
 
             Assertions.assertEquals(
@@ -61,7 +61,7 @@ class NodeMinerImplTest : AbstractTest<NodeMinerImpl<Any>>(
     @Test
     fun `nonce increment_correctness`() {
         allNodesMinerImpl.forEach {
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null)
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0)
             val newBlock = it.getNonceIncrementing(someBlock)
 
             Assertions.assertEquals(
@@ -94,7 +94,7 @@ class NodeMinerImplTest : AbstractTest<NodeMinerImpl<Any>>(
     @Test
     fun `mine block_already mined`() {
         allNodesMinerImpl.forEach {
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, currentHash = "0000")
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, currentHash = "0000", processingTime = 0)
             Assertions.assertNull(it.mineBlock(someBlock))
         }
     }
@@ -102,7 +102,7 @@ class NodeMinerImplTest : AbstractTest<NodeMinerImpl<Any>>(
     @Test
     fun `mine block_correctness`() {
         allNodesMinerImpl.forEachIndexed { ind, it ->
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null)
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0)
             val newBlock = it.mineBlock(someBlock)!!
 
             Assertions.assertNotEquals(

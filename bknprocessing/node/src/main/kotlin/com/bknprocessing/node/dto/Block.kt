@@ -43,6 +43,7 @@ data class Block<T>(
     val previousHash: String,
     val nodeInfo: NodeInfoSubBlock?,
 
+    var processingTime: Long,
     var currentHash: String = "",
     val timestamp: Long = Instant.now().toEpochMilli(),
 
@@ -63,6 +64,7 @@ data class Block<T>(
         builder.currentHash = StringValue.of(currentHash)
         builder.timestamp = Int64Value.of(timestamp)
         builder.nonce = Int64Value.of(nonce)
+        builder.processingTime = Int64Value.of(processingTime)
         builder.addAllObjs(
             objs.map {
                 com.google.protobuf.Any.pack((it as Transaction).toProto())
@@ -87,6 +89,7 @@ data class Block<T>(
                     val trans = it.unpack(com.bknprocessing.common.protoClasses.Transaction::class.java)
                     Transaction.fromProto(trans)
                 }.toMutableList(),
+                processingTime = blck.processingTime.value,
             )
         }
     }

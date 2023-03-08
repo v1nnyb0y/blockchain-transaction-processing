@@ -3,6 +3,7 @@ package com.bknprocessing.node.nodeimpl.miner
 import com.bknprocessing.node.dto.Block
 import com.bknprocessing.node.dto.NodeInfoSubBlock
 import com.bknprocessing.node.nodeimpl.Node
+import java.time.Instant
 import java.util.UUID
 
 open class NodeMinerImpl<T>(
@@ -34,6 +35,7 @@ open class NodeMinerImpl<T>(
         return Block<T>(
             previousHash = previousHash,
             nodeInfo = NodeInfoSubBlock(amount = amount, index = nodeIndex, id = nodeId),
+            processingTime = Instant.now().toEpochMilli(),
         )
             .apply { addObj(obj) }
             .calculateAndSetCurrentHash()
