@@ -2,6 +2,7 @@ package com.bknprocessing.node.nodeimpl
 
 import com.bknprocessing.common.IClient
 import com.bknprocessing.common.IServer
+import com.bknprocessing.common.data.NodeMetricsData
 import com.bknprocessing.node.dto.Block
 import com.bknprocessing.node.dto.NodeInfo
 import com.bknprocessing.node.dto.StateAction
@@ -106,6 +107,16 @@ open class Node<T>(
         )!!
         chain.add(block)
         nodeInfos[id] = amount
+    }
+
+    override fun getNodeMetrics(): NodeMetricsData {
+        return chain.subList(1, chain.size).run {
+            NodeMetricsData(
+                maxProcessingTime = this.maxBy { it.processingTime }.processingTime,
+                minProcessingTime = this.minBy { it.processingTime }.processingTime,
+                avgProcessingTime = this.sumOf { it.processingTime }.toDouble() / this.count(),
+            )
+        }
     }
 
     override suspend fun waitStateChangeAction() = supervisorScope {
