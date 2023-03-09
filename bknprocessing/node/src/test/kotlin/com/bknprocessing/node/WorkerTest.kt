@@ -10,10 +10,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.context.SpringBootTest
 import java.util.UUID
 
-@SpringBootTest
 class WorkerTest : AbstractTest<NodeApplication>(
     clazz = NodeApplication::class.java,
     constructor = { NodeApplication() },
