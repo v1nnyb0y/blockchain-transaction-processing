@@ -11,11 +11,6 @@ open class NodeMinerImpl<T>(
     val isMined: (Block<T>) -> Boolean,
 ) : INodeMiner<T> {
 
-    protected fun Block<T>.calculateAndSetCurrentHash() = apply {
-        currentHash = calculateHash(this)
-    }
-    protected fun Block<T>.nonceIncrement() = copy(nonce = nonce + 1)
-
     override fun isMiner(amount: Int): Boolean = amount > (Node.MAX_MONEY / 20)
 
     override fun mineBlock(block: Block<T>): Block<T>? {
@@ -31,13 +26,17 @@ open class NodeMinerImpl<T>(
         return minedBlock
     }
 
-    override fun constructBlock(obj: T, previousHash: String, nodeId: UUID, nodeIndex: Int, amount: Int): Block<T> {
-        return Block<T>(
+    override fun constructBlock(obj: T, previousHash: String, nodeId: UUID, nodeIndex: Int, amount: Int) =
+        Block<T>(
             previousHash = previousHash,
             nodeInfo = NodeInfoSubBlock(amount = amount, index = nodeIndex, id = nodeId),
             processingTime = Instant.now().toEpochMilli(),
-        )
-            .apply { addObj(obj) }
-            .calculateAndSetCurrentHash()
+        ).apply { addObj(obj) }.calculateAndSetCurrentHash()
+
+    protected fun Block<T>.calculateAndSetCurrentHash() = apply {
+        currentHash = calculateHash(this)
     }
+
+    protected fun Block<T>.nonceIncrement() = copy(nonce = nonce + 1) // TODO copy change to apply
+    // protected fun Block<T>.nonceIncrement() = apply { nonce += 1 }
 }

@@ -7,6 +7,17 @@ open class NodeVerifierImpl<T>(
     val isMined: (Block<T>) -> Boolean,
 ) : INodeVerifier<T> {
 
+    override fun verifyBlock(block: Block<T>, chain: MutableList<Block<T>>): Boolean {
+        chain.add(block)
+
+        if (!isChainValid(chain)) {
+            chain.removeLast()
+            return false
+        }
+
+        return true
+    }
+
     protected fun isChainValid(chain: List<Block<T>>): Boolean {
         when {
             chain.isEmpty() -> return true
@@ -25,16 +36,5 @@ open class NodeVerifierImpl<T>(
                 return true
             }
         }
-    }
-
-    override fun verifyBlock(block: Block<T>, chain: MutableList<Block<T>>): Boolean {
-        chain.add(block)
-
-        if (!isChainValid(chain)) {
-            chain.removeLast()
-            return false
-        }
-
-        return true
     }
 }

@@ -2,9 +2,11 @@ package com.bknprocessing.node.controller
 
 import com.bknprocessing.node.service.NodeService
 import com.bknprocessing.node.utils.logger
+import com.google.common.util.concurrent.AtomicDouble
 import io.micrometer.core.annotation.Timed
 import io.micrometer.core.instrument.MeterRegistry
 import org.slf4j.Logger
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -21,11 +23,12 @@ data class StarterConfig(
 )
 
 data class CustomMetrics(val totalValue: AtomicLong, val avgValue: AtomicLong, val count: AtomicInteger)
+data class NodeMetrics(val maxProcessingTime: AtomicLong, val minProcessingTime: AtomicLong, val avgProcessingTime: AtomicDouble)
 
 @RestController
 class NodeController(
     private val nodeService: NodeService,
-    private val meterRegistry: MeterRegistry,
+    meterRegistry: MeterRegistry,
 ) {
 
     private val log: Logger by logger()
@@ -39,6 +42,12 @@ class NodeController(
         totalValue = meterRegistry.gauge("verify_obj_gauge_total_val", AtomicLong(0))!!,
         avgValue = meterRegistry.gauge("verify_obj_gauge_avg_val", AtomicLong(0))!!,
         count = meterRegistry.gauge("verify_obj_gauge_count", AtomicInteger(0))!!, // TODO counter metric
+    )
+
+    var nodeMetric: NodeMetrics = NodeMetrics(
+        maxProcessingTime = meterRegistry.gauge("max_processing_time", AtomicLong(0))!!,
+        minProcessingTime = meterRegistry.gauge("min_processing_time", AtomicLong(0))!!,
+        avgProcessingTime = meterRegistry.gauge("avg_processing_time", AtomicDouble(0.0))!!,
     )
 
     @PostMapping("/init")
@@ -92,6 +101,7 @@ class NodeController(
     var index = 0
     var modifyList = mutableListOf(25, 50, 75, 100, 0, 0) // 25, 37, 50, 62, 50, 41
     @Timed(description = "healthCheck_metric_timed", histogram = true)
+    @Suppress("unused")
     @GetMapping("/healthCheck")
     fun healthCheck(): String {
         val count = healthCheckGauge.count.incrementAndGet()
@@ -100,5 +110,15 @@ class NodeController(
         log.info("After: hsCount: ${healthCheckGauge.count}, hsAvg: ${healthCheckGauge.avgValue}, hsTotal: ${healthCheckGauge.totalValue}")
         index++
         return "Ok"
+    }
+
+    @Suppress("unused")
+    @Scheduled(cron = "0 0/10 * * * *")
+    fun publishNodeStat() {
+        log.info("Publishing node statistics")
+        val metrics = nodeService.node.getNodeMetrics()
+        nodeMetric.maxProcessingTime.set(metrics.maxProcessingTime)
+        nodeMetric.minProcessingTime.set(metrics.minProcessingTime)
+        nodeMetric.avgProcessingTime.set(metrics.avgProcessingTime)
     }
 }

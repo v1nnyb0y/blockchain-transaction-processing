@@ -109,20 +109,19 @@ open class Node<T>(
         nodeInfos[id] = amount
     }
 
-    override fun getNodeMetrics(): NodeMetricsData {
-        return chain.subList(1, chain.size).run {
+    override fun getNodeMetrics(): NodeMetricsData =
+        chain.subList(1, chain.size).run {
             NodeMetricsData(
-                maxProcessingTime = this.maxBy { it.processingTime }.processingTime,
-                minProcessingTime = this.minBy { it.processingTime }.processingTime,
-                avgProcessingTime = this.sumOf { it.processingTime }.toDouble() / this.count(),
+                maxProcessingTime = this.maxBy { block -> block.processingTime }.processingTime,
+                minProcessingTime = this.minBy { block -> block.processingTime }.processingTime,
+                avgProcessingTime = this.sumOf { block -> block.processingTime }.toDouble() / this.count(),
             )
         }
-    }
 
     override suspend fun waitStateChangeAction() = supervisorScope {
         log.startSmartContractListener(isHealthy, index)
         while (!isFinished) {
-            delay(DELAY_MILSEC)
+            delay(DELAY_MILLS)
             val stateChangeDto = client.getObj(TopicsList.StateChange.name, index) ?: continue
             var castedStateChangeDto = (stateChangeDto as? StateChangeDto<T>)
 
@@ -137,7 +136,10 @@ open class Node<T>(
                         val verificationDtoJson = objectMapper.writeValueAsString(stateChangeDto)
                         log.info("RunVerifier VerificationDtoJson: $verificationDtoJson")
                         castedStateChangeDto =
-                            objectMapper.readValue(verificationDtoJson, StateChangeDto::class.java) as? StateChangeDto<T>
+                            objectMapper.readValue(
+                                verificationDtoJson,
+                                StateChangeDto::class.java,
+                            ) as? StateChangeDto<T>
                                 ?: throw IllegalStateException("Wrong DTO in stateChange queue")
                         action = castedStateChangeDto.action
                         data = castedStateChangeDto.data
@@ -172,7 +174,7 @@ open class Node<T>(
     override suspend fun runMiner() {
         log.startMiner(isHealthy, index)
         while (!isFinished) {
-            delay(DELAY_MILSEC)
+            delay(DELAY_MILLS)
             // TODO support multi miner
             if (/*miner.isMiner(amount) || */isMiner) {
                 val obj = client.getObj(TopicsList.ObjQueue.name) ?: continue
@@ -184,7 +186,7 @@ open class Node<T>(
                 lateinit var constructedBlock: Block<T>
                 lateinit var minedBlock: Block<T>
                 do {
-                    delay(DELAY_MILSEC)
+                    delay(DELAY_MILLS)
                     constructedBlock = miner.constructBlock(
                         castedObj,
                         lastBlockHashInChain,
@@ -211,7 +213,7 @@ open class Node<T>(
                 log.startNetworkVerify(isHealthy, index)
                 while (countOfFinishedNodes != networkSize - 1) {
                     // TODO add checking on 80% of the success nodes
-                    delay(DELAY_MILSEC)
+                    delay(DELAY_MILLS)
 
                     val verificationResult = client.getObj(TopicsList.VerificationResultBlockQueue.name) ?: continue
                     var castedVerificationResultDto = (verificationResult as? VerificationResultDto)
@@ -263,7 +265,7 @@ open class Node<T>(
     override suspend fun runVerifier() {
         log.startVerifier(isHealthy, index)
         while (!isFinished) {
-            delay(DELAY_MILSEC)
+            delay(DELAY_MILLS)
             val verificationDto = client.getObj(TopicsList.VerificationBlockQueue.name, index) ?: continue
             unitTestingData.numberOfHandledVerificationBlocks += 1
 
@@ -279,7 +281,7 @@ open class Node<T>(
 
             if (castedVerificationDto.nodeId == id) continue
 
-            while (stopOnStateChanging) delay(DELAY_MILSEC)
+            while (stopOnStateChanging) delay(DELAY_MILLS)
             amount += 1
             log.startVerify(isHealthy, index, castedVerificationDto.block.currentHash)
             server.sendObj(
@@ -319,8 +321,10 @@ open class Node<T>(
         log.startSmAcceptNewBlock(isHealthy, index)
         if (newBlock.currentHash == lastBlockHashInChain) {
             chain.last().processingTime = newBlock.processingTime
+        } else {
+            chain.add(newBlock)
         }
-        chain.add(newBlock)
+        // Here is possible to send metrics call
     }
 
     protected fun handleRemoveUnhealthyBlocks(lastSuccessBlock: Block<T>) {
@@ -340,7 +344,7 @@ open class Node<T>(
     private suspend fun handleFinishNodeExperiment(transCount: Int) {
         log.startSmFinishProcess(isHealthy, index)
         while (chain.size != transCount + 1) { // + 1 cause of generic block
-            delay(DELAY_MILSEC * 100)
+            delay(DELAY_MILLS * 100)
         }
         isFinished = true
     }
@@ -384,7 +388,7 @@ open class Node<T>(
         const val MAX_MONEY: Int = 10000
         const val MIN_MONEY: Int = 100
 
-        private const val DELAY_MILSEC: Long = 100
+        private const val DELAY_MILLS: Long = 100
         private const val EPSILON = 0.0000000001
 
         protected const val difficulty = 2

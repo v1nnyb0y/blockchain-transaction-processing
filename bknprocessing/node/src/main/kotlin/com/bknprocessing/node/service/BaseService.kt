@@ -16,6 +16,8 @@ abstract class BaseService {
 
     private val log: Logger by logger()
 
+    lateinit var node: INode
+
     fun initNode(
         nodeIndex: Int,
         isHealthy: Boolean,
@@ -24,7 +26,7 @@ abstract class BaseService {
         client: IClient,
         server: IServer,
     ) {
-        val node: INode = Node<Transaction>(
+        node = Node<Transaction>(
             index = nodeIndex,
             // isHealthy = nodeIndex < totalNodesCount - unhealthyNodesCount, // 2 < 7 - 3, 4 < 7 - 3
             isHealthy = isHealthy,
