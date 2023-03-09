@@ -46,7 +46,7 @@ class NodeVerifierImplTest : AbstractTest<NodeVerifierImpl<Any>>(
     @Test
     fun `is chain valid_single size_correctness`() {
         allNodesVerifierImpl.forEachIndexed { ind, it ->
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null).apply {
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0).apply {
                 currentHash = allNodes[ind].getCalculatedHash(this)
             }
 
@@ -57,7 +57,7 @@ class NodeVerifierImplTest : AbstractTest<NodeVerifierImpl<Any>>(
     @Test
     fun `is chain valid_single size_failed`() {
         allNodesVerifierImpl.forEachIndexed { ind, it ->
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null)
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0)
 
             Assertions.assertFalse(it.getIsChainValidation(listOf(someBlock)))
         }
@@ -66,14 +66,15 @@ class NodeVerifierImplTest : AbstractTest<NodeVerifierImpl<Any>>(
     @Test
     fun `is chain valid_multiple size_correctness`() {
         allNodesVerifierImpl.forEachIndexed { ind, it ->
-            var someBlock = Block<Any>(previousHash = "", nodeInfo = null).apply {
+            var someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0).apply {
                 currentHash = allNodes[ind].getCalculatedHash(this)
             }
             someBlock = allNodes[ind].getNodeMiner().mineBlock(someBlock)!!
 
-            var anotherSomeBlock = Block<Any>(previousHash = someBlock.currentHash, nodeInfo = null).apply {
-                currentHash = allNodes[ind].getCalculatedHash(this)
-            }
+            var anotherSomeBlock =
+                Block<Any>(previousHash = someBlock.currentHash, nodeInfo = null, processingTime = 0).apply {
+                    currentHash = allNodes[ind].getCalculatedHash(this)
+                }
             anotherSomeBlock = allNodes[ind].getNodeMiner().mineBlock(anotherSomeBlock)!!
 
             Assertions.assertTrue(it.getIsChainValidation(listOf(someBlock, anotherSomeBlock)))
@@ -83,12 +84,13 @@ class NodeVerifierImplTest : AbstractTest<NodeVerifierImpl<Any>>(
     @Test
     fun `is chain valid_multiple size_failed_is mined`() {
         allNodesVerifierImpl.forEachIndexed { ind, it ->
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null).apply {
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0).apply {
                 currentHash = allNodes[ind].getCalculatedHash(this)
             }
-            val anotherSomeBlock = Block<Any>(previousHash = someBlock.currentHash, nodeInfo = null).apply {
-                currentHash = allNodes[ind].getCalculatedHash(this)
-            }
+            val anotherSomeBlock =
+                Block<Any>(previousHash = someBlock.currentHash, nodeInfo = null, processingTime = 0).apply {
+                    currentHash = allNodes[ind].getCalculatedHash(this)
+                }
 
             Assertions.assertFalse(it.getIsChainValidation(listOf(someBlock, anotherSomeBlock)))
         }
@@ -97,10 +99,10 @@ class NodeVerifierImplTest : AbstractTest<NodeVerifierImpl<Any>>(
     @Test
     fun `is chain valid_multiple size_failed_last block`() {
         allNodesVerifierImpl.forEachIndexed { ind, it ->
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null).apply {
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0).apply {
                 currentHash = allNodes[ind].getCalculatedHash(this)
             }
-            val anotherSomeBlock = Block<Any>(previousHash = someBlock.currentHash, nodeInfo = null)
+            val anotherSomeBlock = Block<Any>(previousHash = someBlock.currentHash, nodeInfo = null, processingTime = 0)
 
             Assertions.assertFalse(it.getIsChainValidation(listOf(someBlock, anotherSomeBlock)))
         }
@@ -109,10 +111,11 @@ class NodeVerifierImplTest : AbstractTest<NodeVerifierImpl<Any>>(
     @Test
     fun `is chain valid_multiple size_failed_first block`() {
         allNodesVerifierImpl.forEachIndexed { ind, it ->
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null)
-            val anotherSomeBlock = Block<Any>(previousHash = someBlock.currentHash, nodeInfo = null).apply {
-                currentHash = allNodes[ind].getCalculatedHash(this)
-            }
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0)
+            val anotherSomeBlock =
+                Block<Any>(previousHash = someBlock.currentHash, nodeInfo = null, processingTime = 0).apply {
+                    currentHash = allNodes[ind].getCalculatedHash(this)
+                }
 
             Assertions.assertFalse(it.getIsChainValidation(listOf(someBlock, anotherSomeBlock)))
         }
@@ -121,10 +124,10 @@ class NodeVerifierImplTest : AbstractTest<NodeVerifierImpl<Any>>(
     @Test
     fun `is chain valid_multiple size_failed_previous hash`() {
         allNodesVerifierImpl.forEachIndexed { ind, it ->
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null).apply {
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0).apply {
                 currentHash = allNodes[ind].getCalculatedHash(this)
             }
-            val anotherSomeBlock = Block<Any>(previousHash = "", nodeInfo = null).apply {
+            val anotherSomeBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0).apply {
                 currentHash = allNodes[ind].getCalculatedHash(this)
             }
 
@@ -135,7 +138,7 @@ class NodeVerifierImplTest : AbstractTest<NodeVerifierImpl<Any>>(
     @Test
     fun `verify block_correctness`() {
         allNodesVerifierImpl.forEachIndexed { ind, it ->
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null).apply {
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0).apply {
                 currentHash = allNodes[ind].getCalculatedHash(this)
             }
             val chain: MutableList<Block<Any>> = mutableListOf()
@@ -149,7 +152,7 @@ class NodeVerifierImplTest : AbstractTest<NodeVerifierImpl<Any>>(
     @Test
     fun `verify block_failed`() {
         allNodesVerifierImpl.forEachIndexed { ind, it ->
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null)
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0)
             val chain: MutableList<Block<Any>> = mutableListOf()
 
             Assertions.assertFalse(it.verifyBlock(someBlock, chain))

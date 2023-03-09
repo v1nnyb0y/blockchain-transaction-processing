@@ -55,7 +55,7 @@ class NodeTest : AbstractTest<Node<Any>>(
     @Test
     fun `calculate hash_correctness`() {
         allNodes.forEach {
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null)
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0)
             val previousHash = someBlock.previousHash
             val objs = someBlock.objs
             val timestamp = someBlock.timestamp
@@ -63,7 +63,7 @@ class NodeTest : AbstractTest<Node<Any>>(
 
             Assertions.assertTrue(it.getCalculatedHash(someBlock).isNotBlank())
             Assertions.assertEquals(
-                //"$previousHash$objs$timestamp$nonce".hash(),
+                // "$previousHash$objs$timestamp$nonce".hash(),
                 "$previousHash$timestamp$nonce".hash(),
                 it.getCalculatedHash(someBlock),
             )
@@ -73,8 +73,10 @@ class NodeTest : AbstractTest<Node<Any>>(
     @Test
     fun `is mined block_correctness`() {
         allNodes.forEach {
-            val someBlockTrue = Block<Any>(previousHash = "", nodeInfo = null, currentHash = "00123")
-            val someBlockFalse = Block<Any>(previousHash = "", nodeInfo = null, currentHash = "12300123")
+            val someBlockTrue =
+                Block<Any>(previousHash = "", nodeInfo = null, currentHash = "00123", processingTime = 0)
+            val someBlockFalse =
+                Block<Any>(previousHash = "", nodeInfo = null, currentHash = "12300123", processingTime = 0)
 
             Assertions.assertTrue(it.getIsMined(someBlockTrue))
             Assertions.assertFalse(it.getIsMined(someBlockFalse))
@@ -85,7 +87,7 @@ class NodeTest : AbstractTest<Node<Any>>(
     fun `last hash in chain_correctness`() {
         allNodes.forEach {
             val chain = it.getBlockChain()
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null)
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0)
                 .apply { currentHash = "justtesthash" }
 
             chain.add(someBlock)
@@ -100,7 +102,7 @@ class NodeTest : AbstractTest<Node<Any>>(
     fun `accept new block_exists`() {
         allNodes.forEach {
             val chain = it.getBlockChain()
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null)
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0)
                 .apply { currentHash = "justtesthash" }
 
             chain.add(someBlock)
@@ -117,7 +119,7 @@ class NodeTest : AbstractTest<Node<Any>>(
     fun `accept new block_accept`() {
         allNodes.forEach {
             val chain = it.getBlockChain()
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null)
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0)
                 .apply { currentHash = "justtesthash" }
 
             it.getSmAcceptNewBlock(someBlock)
@@ -136,7 +138,7 @@ class NodeTest : AbstractTest<Node<Any>>(
     fun `sync blocks_without remove`() {
         allNodes.forEach {
             val chain = it.getBlockChain()
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null)
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0)
                 .apply { currentHash = "justtesthash" }
 
             chain.add(someBlock)
@@ -150,9 +152,9 @@ class NodeTest : AbstractTest<Node<Any>>(
     fun `sync blocks_with remove`() {
         allNodes.forEach {
             val chain = it.getBlockChain()
-            val someBlock = Block<Any>(previousHash = "", nodeInfo = null)
+            val someBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0)
                 .apply { currentHash = "justtesthash" }
-            val anotherSomeBlock = Block<Any>(previousHash = "", nodeInfo = null)
+            val anotherSomeBlock = Block<Any>(previousHash = "", nodeInfo = null, processingTime = 0)
                 .apply { currentHash = "justtesthashanother" }
 
             chain.add(someBlock)
@@ -175,6 +177,7 @@ class NodeTest : AbstractTest<Node<Any>>(
                     id = goodNode.id,
                     index = goodNode.index,
                 ),
+                processingTime = 0,
             )
             val anotherBlock = Block<Any>(
                 previousHash = "",
@@ -184,6 +187,7 @@ class NodeTest : AbstractTest<Node<Any>>(
                     index = goodNode.index,
                 ),
                 timestamp = Instant.now().toEpochMilli() + 10,
+                processingTime = 0,
             )
             val someAnotherBlock = Block<Any>(
                 previousHash = "",
@@ -193,6 +197,7 @@ class NodeTest : AbstractTest<Node<Any>>(
                     index = badNode.index,
                 ),
                 timestamp = Instant.now().toEpochMilli() + 12,
+                processingTime = 0,
             )
 
             chain.add(someBlock)

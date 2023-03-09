@@ -7,7 +7,13 @@ import java.util.UUID
 
 class BlockTest : AbstractTest<Block<Any>>(
     clazz = Block::class.java,
-    constructor = { Block(previousHash = "", nodeInfo = NodeInfoSubBlock(amount = 0, id = UUID.randomUUID(), index = 0)) },
+    constructor = {
+        Block(
+            previousHash = "",
+            processingTime = 0,
+            nodeInfo = NodeInfoSubBlock(amount = 0, id = UUID.randomUUID(), index = 0),
+        )
+    },
 ) {
 
     @Test
