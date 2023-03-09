@@ -13,12 +13,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("io.micrometer:micrometer-registry-prometheus:1.10.3")
-
-    implementation("net.devh:grpc-server-spring-boot-starter:2.14.0.RELEASE")
-
     // TODO check and remove one row bellow
+    implementation("net.devh:grpc-server-spring-boot-starter:2.14.0.RELEASE")
     implementation("org.slf4j:slf4j-api:1.7.0")
-//    implementation("org.springframework.metrics:spring-metrics:0.5.1.RELEASE")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")

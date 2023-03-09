@@ -1,6 +1,7 @@
-import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
+//import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-// import io.gitlab.arturbosch.detekt.Detekt
+import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
+import java.time.LocalDateTime
 
 plugins {
     id("org.springframework.boot") version "2.7.5" apply false
@@ -44,14 +45,13 @@ subprojects {
         enabled = true
     }
 
-    /*
     tasks.withType<Test> {
         useJUnitPlatform()
         testLogging {
             events = setOf(
-                TestLogEvent.FAILED,
-                TestLogEvent.PASSED,
-                TestLogEvent.SKIPPED,
+                org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED,
+                org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED,
+                org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED,
             )
             exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
             showExceptions = true
@@ -59,7 +59,6 @@ subprojects {
             showStackTraces = true
         }
     }
-    */
 
     /* TODO revert commit
     tasks.withType<Detekt> {
